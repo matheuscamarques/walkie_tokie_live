@@ -39,10 +39,10 @@ defmodule WalkieTokie.Receiver do
   @impl true
   def init(:ok) do
     port =
-      Port.open({:spawn_executable, @aplay_path}, [
+      Port.open({:spawn_executable, @play_path}, [
         :binary,
         :exit_status,
-        args: @aplay_args
+        args: @play_args
       ])
 
     IO.puts("[Receiver] Porta para aplay aberta.")
