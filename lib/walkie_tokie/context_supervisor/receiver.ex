@@ -3,14 +3,21 @@ defmodule WalkieTokie.Receiver do
   require Logger
   use GenServer
 
-  @aplay_path "/usr/bin/aplay"
-@aplay_args [
-  "--quiet",
-  "-r", "4000",   # taxa de amostragem
-  "-f", "U8",     # 8 bits unsigned
-  "-c", "1",      # mono
-  "-t", "raw"
-]
+  @aplay_path System.find_executable("aplay")
+  @aplay_args [
+    "--quiet",
+    # taxa de amostragem
+    "-r",
+    "4000",
+    # 8 bits unsigned
+    "-f",
+    "U8",
+    # mono
+    "-c",
+    "1",
+    "-t",
+    "raw"
+  ]
 
   ## Public API
 
@@ -20,7 +27,6 @@ defmodule WalkieTokie.Receiver do
   end
 
   def send_chunk(from_node_name, chunk) when is_binary(chunk) do
-
     GenServer.cast(__MODULE__, {:audio_chunk, from_node_name, chunk})
   end
 
@@ -32,11 +38,12 @@ defmodule WalkieTokie.Receiver do
 
   @impl true
   def init(:ok) do
-    port = Port.open({:spawn_executable, @aplay_path}, [
-      :binary,
-      :exit_status,
-      args: @aplay_args
-    ])
+    port =
+      Port.open({:spawn_executable, @aplay_path}, [
+        :binary,
+        :exit_status,
+        args: @aplay_args
+      ])
 
     IO.puts("[Receiver] Porta para aplay aberta.")
     {:ok, port}
@@ -45,6 +52,7 @@ defmodule WalkieTokie.Receiver do
   @impl true
   def handle_cast({:audio_chunk, from_node_name, chunk}, port) do
     IO.inspect("reproduzindo chunk")
+
     PubSub.broadcast(
       WalkieTokie.PubSub,
       "node_speaking",
