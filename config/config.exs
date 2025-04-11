@@ -7,7 +7,7 @@
 # General application configuration
 import Config
 
-config :walkie_tokie, :master_node, :"server@25.48.233.8"
+config :walkie_tokie, :master_node, :"server@45.186.240.251"
 
 config :walkie_tokie,
   ecto_repos: [WalkieTokie.Repo],
