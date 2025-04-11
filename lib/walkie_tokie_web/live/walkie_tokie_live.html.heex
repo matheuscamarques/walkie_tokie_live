@@ -1,0 +1,90 @@
+<div class="w-full max-w-3xl mx-auto shadow-lg rounded-md overflow-hidden bg-white mt-8">
+  <div class="bg-purple-800 text-white p-6">
+    <div class="flex items-center justify-between">
+      <h2 class="flex items-center gap-2 text-lg font-semibold">
+        <.icon name="hero-radio" class="h-5 w-5" />
+        Walkie Talkie
+        <div class="h-2 w-2 rounded-full bg-green-500 ml-2"></div>
+      </h2>
+      <span class="inline-flex items-center gap-1 bg-purple-700 text-xs rounded-full px-2 py-1">
+        <div class={["h-2 w-2 rounded-full", (@is_transmitting && "bg-red-500") || "bg-green-500"]}></div>
+        <%= if @is_transmitting do %>
+          Transmitindo
+        <% else %>
+          Conectado
+        <% end %>
+      </span>
+    </div>
+  </div>
+
+  <div class="p-6 flex flex-col items-center justify-center">
+    <button
+      class={[
+        "h-24 w-24 rounded-full transition-all duration-200 mb-4 focus:outline-none",
+        (@is_transmitting && "bg-red-500 hover:bg-red-600") || "bg-purple-800 hover:bg-purple-900"
+      ]}
+      phx-hook="MicButton"
+      id="mix-button"
+    >
+      <.icon name="hero-microphone" class={"h-10 w-10 #{@is_transmitting && "animate-pulse"}"} />
+    </button>
+    <p class="text-sm text-gray-500">
+      <%= if @is_transmitting do %>
+        Solte para parar de falar
+      <% else %>
+        Pressione e segure para falar
+      <% end %>
+    </p>
+  </div>
+
+  <hr class="border-gray-300" />
+
+  <div class="p-6 overflow-y-auto max-h-[400px]">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium flex items-center gap-1">
+        <.icon name="hero-user" class="h-4 w-4" /> Usuários Conectados
+      </h3>
+      <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">
+        <%= length(Enum.filter(@users, & &1.online)) %>/<%= length(@users) %>
+      </span>
+    </div>
+
+    <div class="overflow-y-auto h-[300px] rounded-md border border-gray-300">
+      <div class="p-4 space-y-2">
+        <%= for user <- Enum.sort_by(@users, &(!&1.is_speaking)) do %>
+          <div class={[
+            "flex items-center justify-between p-3 rounded-lg transition-colors",
+            @active_user == user.id && "bg-purple-200",
+            !user.online && "opacity-50"
+          ]}>
+            <div class="flex items-center gap-2">
+              <div class={["h-2 w-2 rounded-full",
+                          (user.is_speaking && "bg-blue-500") || (user.online && "bg-green-500") || "bg-gray-400"]}></div>
+              <p class="text-sm font-medium"><%= user.name %></p>
+              <p class="text-xs text-gray-500">
+                <%= cond do %>
+                  <% user.is_speaking -> %> <span class="text-blue-500">Falando</span>
+                  <% user.online -> %> Online
+                  <% true -> %> Offline
+                <% end %>
+              </p>
+            </div>
+            <%= if user.is_speaking do %>
+              <.icon name="hero-volume-2" class="h-4 w-4 text-purple-800 animate-pulse" />
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <hr class="border-gray-300" />
+
+  <div class="p-4 text-center text-xs text-gray-500 bg-purple-100">
+    <p class="flex items-center justify-center gap-1 mb-2">
+      Powered by <span class="font-semibold text-purple-800">Erlang OTP</span>
+      and <span class="font-semibold text-purple-800">Elixir</span>
+    </p>
+    <p class="font-medium text-purple-800">Criado por Matheus de Camargo Marques</p>
+  </div>
+</div>
