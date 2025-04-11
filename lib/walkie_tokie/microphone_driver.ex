@@ -146,20 +146,20 @@ defmodule WalkieTokie.MicrophoneDriver do
     Logger.info("Iniciando gravação de áudio...")
     updated_state = set_dict(state, :is_talking, true)
 
-    path = System.find_executable("arecord")
-    port =
-      Port.open({:spawn_executable, path}, [
-        :binary,
-        :stream,
-        args: [
-          "-r", "4000",
-          "-f", "U8",
-          "-t", "raw",
-          "-D", "pulse",
-          "-c", "1"
-        ]
-      ])
-      IO.inspect(port)
+    {path, args} =
+      if System.get_env("OS") == "mac" do
+        {
+          System.find_executable("sox"),
+          ["-d", "-b", "8", "-r", "4000", "-c", "1", "-e", "unsigned-integer", "-t", "raw", "-"]
+        }
+      else
+        {
+          System.find_executable("arecord"),
+          ["-r", "4000", "-f", "U8", "-t", "raw", "-D", "pulse", "-c", "1"]
+        }
+      end
+
+    port = Port.open({:spawn_executable, path}, [:binary, :stream, args: args])
     {:noreply, set_dict(updated_state, :audio_port, port)}
   end
 

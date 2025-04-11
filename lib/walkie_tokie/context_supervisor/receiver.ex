@@ -3,20 +3,20 @@ defmodule WalkieTokie.Receiver do
   require Logger
   use GenServer
 
-  @aplay_path System.find_executable("aplay")
-  @aplay_args [
-    "--quiet",
-    # taxa de amostragem
-    "-r",
-    "4000",
-    # 8 bits unsigned
-    "-f",
-    "U8",
+  @play_path System.find_executable("play")
+  @play_args [
+    # input: raw audio
+    "-t", "raw",
+    # 8-bit unsigned
+    "-e", "unsigned",
+    "-b", "8",
     # mono
-    "-c",
-    "1",
-    "-t",
-    "raw"
+    "-c", "1",
+    # sample rate
+    "-r", "4000",
+    "-",  # input from stdin
+    # output to default audio device
+    "trim", "0"  # prevent play from expecting more data (important)
   ]
 
   ## Public API
