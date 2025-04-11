@@ -9,10 +9,10 @@ defmodule WalkieTokie.Application do
   def start(_type, _args) do
     children = [
       WalkieTokieWeb.Telemetry,
-      WalkieTokie.Repo,
-      {Ecto.Migrator,
-        repos: Application.fetch_env!(:walkie_tokie, :ecto_repos),
-        skip: skip_migrations?()},
+      # WalkieTokie.Repo,
+      # {Ecto.Migrator,
+      #   repos: Application.fetch_env!(:walkie_tokie, :ecto_repos),
+      #   skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:walkie_tokie, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: WalkieTokie.PubSub},
       # Start the Finch HTTP client for sending emails
@@ -41,8 +41,8 @@ defmodule WalkieTokie.Application do
     :ok
   end
 
-  defp skip_migrations?() do
-    # By default, sqlite migrations are run when using a release
-    System.get_env("RELEASE_NAME") != nil
-  end
+  # defp skip_migrations?() do
+  #   # By default, sqlite migrations are run when using a release
+  #   System.get_env("RELEASE_NAME") != nil
+  # end
 end

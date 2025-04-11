@@ -9,9 +9,9 @@ import Config
 
 config :walkie_tokie, :master_node, :"server@10.241.169.206"
 
-config :walkie_tokie,
-  ecto_repos: [WalkieTokie.Repo],
-  generators: [timestamp_type: :utc_datetime]
+# config :walkie_tokie,
+#   ecto_repos: [WalkieTokie.Repo],
+#   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
 port = String.to_integer(System.get_env("PORT") || "4000")
