@@ -92,6 +92,7 @@ defmodule WalkieTokie.MicrophoneDriver do
   def init(args) do
     IO.inspect(args)
     audio_device = Keyword.get(args, :audio_device, "default")
+
     state = {
       {:connection_status, :disconnected},
       {:audio_device, audio_device},
@@ -127,7 +128,6 @@ defmodule WalkieTokie.MicrophoneDriver do
     {:noreply, state}
   end
 
-
   @spec handle_info(:try_connection, dict_state) :: {:noreply, dict_state}
   def handle_info(:try_connection, state) do
     # Lógica de conexão com outro nó removida.
@@ -144,23 +144,56 @@ defmodule WalkieTokie.MicrophoneDriver do
   @spec handle_info(:start_talking, dict_state) :: {:noreply, dict_state}
   def handle_info(:start_talking, state) do
     Logger.info("Iniciando gravação de áudio...")
+
     updated_state = set_dict(state, :is_talking, true)
 
     {path, args} =
-      if System.get_env("OS") == "mac" do
-        {
-          System.find_executable("sox"),
-          ["-d", "-b", "8", "-r", "4000", "-c", "1", "-e", "unsigned-integer", "-t", "raw", "-"]
-        }
-      else
-        {
-          System.find_executable("arecord"),
-          ["-r", "4000", "-f", "U8", "-t", "raw", "-D", "pulse", "-c", "1"]
-        }
+      case System.get_env("OS") do
+        "mac" ->
+          {
+            System.find_executable("sox"),
+            [
+              "-d",
+              "-b",
+              "16",
+              "-r",
+              "16000",
+              "-c",
+              "1",
+              "-e",
+              "signed-integer",
+              "-t",
+              "raw",
+              "-"
+            ]
+          }
+
+        _linux_or_other ->
+          {
+            System.find_executable("arecord"),
+            [
+              "-r",
+              "16000",
+              "-f",
+              "S16_LE",
+              "-t",
+              "raw",
+              "-D",
+              "pulse",
+              "-c",
+              "1"
+            ]
+          }
       end
 
-    port = Port.open({:spawn_executable, path}, [:binary, :stream, args: args])
-    {:noreply, set_dict(updated_state, :audio_port, port)}
+    # Sanity check: Se path for nil, falha com log
+    if path == nil do
+      Logger.error("Executável de captura de áudio não encontrado!")
+      {:noreply, set_dict(updated_state, :audio_port, nil)}
+    else
+      port = Port.open({:spawn_executable, path}, [:binary, :stream, args: args])
+      {:noreply, set_dict(updated_state, :audio_port, port)}
+    end
   end
 
   @spec handle_info(:stop_talking, dict_state) :: {:noreply, dict_state}
@@ -262,8 +295,8 @@ defmodule WalkieTokie.MicrophoneDriver do
     case key do
       :is_talking ->
         {{:connection_status, connection_status}, {:audio_device, audio_device},
-         {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data},
-         {:is_talking, new_value}, {:audio_port, audio_port}}
+         {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, new_value},
+         {:audio_port, audio_port}}
 
       :audio_port ->
         {{:connection_status, connection_status}, {:audio_device, audio_device},
@@ -281,5 +314,4 @@ defmodule WalkieTokie.MicrophoneDriver do
     # Retorna o estado original se a chave não for :is_talking ou :audio_port
     state
   end
-
 end

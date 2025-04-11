@@ -5,18 +5,13 @@ defmodule WalkieTokie.Receiver do
 
   @play_path System.find_executable("play")
   @play_args [
-    # input: raw audio
     "-t", "raw",
-    # 8-bit unsigned
-    "-e", "unsigned",
-    "-b", "8",
-    # mono
+    "-e", "signed",
+    "-b", "16",
     "-c", "1",
-    # sample rate
-    "-r", "4000",
-    "-",  # input from stdin
-    # output to default audio device
-    "trim", "0"  # prevent play from expecting more data (important)
+    "-r", "16000",
+    "-",
+    "trim", "0"
   ]
 
   ## Public API
