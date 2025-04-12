@@ -8,6 +8,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       PubSub.subscribe(WalkieTokie.PubSub, "node_speaking")
+      PubSub.subscribe(WalkieTokie.ChatPubSub, "node_messages")
       Process.send_after(self(), :check_inactive_users, @inactivity_timeout)
     end
 
@@ -32,8 +33,34 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
      socket
      |> assign(is_transmitting: false)
      |> assign(active_user: nil)
-     |> assign(users: users)}
+     |> assign(users: users)
+     |> assign(
+       user: %{
+         id: Node.self(),
+         name: Atom.to_string(Node.self()),
+         online: true,
+         is_speaking: false,
+         last_active_at: current_time
+       }
+     )
+     |> assign(messages: [])}
   end
+
+
+  def handle_event("send_message", %{"message" => message}, socket) do
+    if message != "" do
+      new_message = %{user: socket.assigns.user, body: message, date: now()}
+      # messages = [new_message | socket.assigns.messages]
+
+      # Enviar mensagem para o tópico
+      PubSub.broadcast!(WalkieTokie.ChatPubSub, "node_messages", {:message, new_message})
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
+  end
+
 
   def handle_event("start_transmission", _params, socket) do
     MicrophoneDriver.start_talking()
@@ -45,8 +72,22 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
     {:noreply, assign(socket, :is_transmitting, false)}
   end
 
+  def handle_info({:message, message}, socket) do
+
+    if socket.assigns.user.name != message.user.name do
+      # Enviar notificação para o cliente
+      push_event(socket, "push-notification", %{
+        title: "Nova mensagem de #{message.user.name}",
+        body: message.body
+      })
+    end
+
+    {:noreply,
+     socket
+     |> assign(messages: socket.assigns.messages ++ [message])}
+  end
+
   def handle_info({:node_speaking, from_node_name}, socket) do
-    IO.inspect("recebendo audio de #{from_node_name}")
     current_time = now()
 
     users =
@@ -88,7 +129,8 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
 
     users =
       Enum.map(socket.assigns.users, fn user ->
-        if user.online && time_diff_in_seconds(user.last_active_at, now) > (@inactivity_timeout / 1000) do
+        if user.online &&
+             time_diff_in_seconds(user.last_active_at, now) > @inactivity_timeout / 1000 do
           %{user | online: false, is_speaking: false}
         else
           user

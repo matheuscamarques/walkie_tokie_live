@@ -5,13 +5,14 @@ defmodule WalkieTokie.Receiver do
 
   @play_path System.find_executable("play")
   @play_args [
+    "-q",
+    "--buffer", "4096",
     "-t", "raw",
     "-e", "signed",
     "-b", "16",
     "-c", "1",
     "-r", "16000",
-    "-",
-    "trim", "0"
+    "-"
   ]
 
   ## Public API
@@ -46,7 +47,6 @@ defmodule WalkieTokie.Receiver do
 
   @impl true
   def handle_cast({:audio_chunk, from_node_name, chunk}, port) do
-    IO.inspect("reproduzindo chunk")
 
     PubSub.broadcast(
       WalkieTokie.PubSub,

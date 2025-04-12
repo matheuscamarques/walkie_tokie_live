@@ -14,7 +14,16 @@ defmodule WalkieTokie.Application do
       #   repos: Application.fetch_env!(:walkie_tokie, :ecto_repos),
       #   skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:walkie_tokie, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: WalkieTokie.PubSub},
+      Supervisor.child_spec(
+        {Phoenix.PubSub, name: WalkieTokie.PubSub},
+        id: WalkieTokie.PubSub # ID único para o supervisor
+      ),
+
+      # Segunda instância do PubSub (exemplo)
+      Supervisor.child_spec(
+        {Phoenix.PubSub, name: WalkieTokie.ChatPubSub}, # Nome único para registro
+        id: WalkieTokie.ChatPubSub # ID único para o supervisor (diferente do primeiro)
+      ),
       # Start the Finch HTTP client for sending emails
       {Finch, name: WalkieTokie.Finch},
       # Start a worker by calling: WalkieTokie.Worker.start_link(arg)

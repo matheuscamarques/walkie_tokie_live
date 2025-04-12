@@ -1,90 +1,191 @@
-<div class="w-full max-w-3xl mx-auto shadow-lg rounded-md overflow-hidden bg-white mt-8">
-  <div class="bg-purple-800 text-white p-6">
+<div id="notification-container" phx-hook="PushNotification">
+  <div/>
+</div>
+
+<%# Presume-se que você tenha assigns como @user, @users, @messages, @is_transmitting, @active_user %>
+<div class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+  <%# ===== Cabeçalho Principal ===== %>
+  <header class="bg-purple-700 text-white p-4 shadow-md dark:bg-purple-900 flex-shrink-0">
     <div class="flex items-center justify-between">
-      <h2 class="flex items-center gap-2 text-lg font-semibold">
-        <.icon name="hero-radio" class="h-5 w-5" />
+      <h1 class="flex items-center gap-2 text-xl font-semibold">
+        <.icon name="hero-radio" class="h-6 w-6 text-white" />
         Walkie Talkie
-        <div class="h-2 w-2 rounded-full bg-green-500 ml-2"></div>
-      </h2>
-      <span class="inline-flex items-center gap-1 bg-purple-700 text-xs rounded-full px-2 py-1">
-        <div class={["h-2 w-2 rounded-full", (@is_transmitting && "bg-red-500") || "bg-green-500"]}></div>
-        <%= if @is_transmitting do %>
-          Transmitindo
-        <% else %>
-          Conectado
-        <% end %>
-      </span>
+      </h1>
+      <div class="flex items-center gap-2 text-sm">
+        <span>{@user.name}</span>
+        <span class={"flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium " <>
+                      if @is_transmitting do
+                        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      else
+                        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      end
+                    }>
+          <div class={["h-2 w-2 rounded-full", (@is_transmitting && "bg-red-500") || "bg-green-500"]}></div>
+          <%= if @is_transmitting, do: "Transmitindo", else: "Conectado" %>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <%# ===== NOVA LINHA DE CABEÇALHOS DE PAINEL ===== %>
+  <div class="flex border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+    <%# Cabeçalho do Painel de Usuários %>
+    <div class="w-1/3 lg:w-1/4 p-4 border-r border-gray-300 dark:border-gray-700">
+      <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Usuários Online</h3>
+    </div>
+    <%# Cabeçalho da Área de Mensagens %>
+    <div class="flex-1 p-4"> <%# flex-1 ocupa o resto da largura %>
+      <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Mensagens</h3>
     </div>
   </div>
 
-  <div class="p-6 flex flex-col items-center justify-center">
-    <button
-      class={[
-        "h-24 w-24 rounded-full transition-all duration-200 mb-4 focus:outline-none",
-        (@is_transmitting && "bg-red-500 hover:bg-red-600") || "bg-purple-800 hover:bg-purple-900"
-      ]}
-      phx-hook="MicButton"
-      id="mix-button"
-    >
-      <.icon name="hero-microphone" class={"h-10 w-10 #{@is_transmitting && "animate-pulse"}"} />
-    </button>
-    <p class="text-sm text-gray-500">
-      <%= if @is_transmitting do %>
-        Solte para parar de falar
-      <% else %>
-        Pressione e segure para falar
-      <% end %>
-    </p>
-  </div>
+  <%# ===== Conteúdo Principal (Layout Flexível) ===== %>
+  <div class="flex flex-1 overflow-hidden">
 
-  <hr class="border-gray-300" />
+    <%# ===== Painel Lateral (Usuários e Botão de Microfone) ===== %>
+    <aside class="w-1/3 lg:w-1/4 flex flex-col border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <%# O CABEÇALHO FOI MOVIDO PARA CIMA %>
+      <%# <div class="p-4 border-b border-gray-300 dark:border-gray-700 flex-shrink-0"> ... </div>  REMOVED %>
 
-  <div class="p-6 overflow-y-auto max-h-[400px]">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-medium flex items-center gap-1">
-        <.icon name="hero-user" class="h-4 w-4" /> Usuários Conectados
-      </h3>
-      <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">
-        <%= length(Enum.filter(@users, & &1.online)) %>/<%= length(@users) %>
-      </span>
-    </div>
-
-    <div class="overflow-y-auto h-[300px] rounded-md border border-gray-300">
-      <div class="p-4 space-y-2">
+      <%# Lista de usuários com scroll %>
+      <div class="flex-1 overflow-y-auto p-4 space-y-2">
         <%= for user <- Enum.sort_by(@users, &(!&1.is_speaking)) do %>
           <div class={[
-            "flex items-center justify-between p-3 rounded-lg transition-colors",
-            @active_user == user.id && "bg-purple-200",
-            !user.online && "opacity-50"
+            "flex items-center justify-between p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700",
+            @active_user == user.id && "bg-purple-100 dark:bg-purple-800",
+            !user.online && "opacity-50 pointer-events-none"
           ]}>
-            <div class="flex items-center gap-2">
-              <div class={["h-2 w-2 rounded-full",
-                          (user.is_speaking && "bg-blue-500") || (user.online && "bg-green-500") || "bg-gray-400"]}></div>
-              <p class="text-sm font-medium"><%= user.name %></p>
-              <p class="text-xs text-gray-500">
-                <%= cond do %>
-                  <% user.is_speaking -> %> <span class="text-blue-500">Falando</span>
-                  <% user.online -> %> Online
-                  <% true -> %> Offline
-                <% end %>
-              </p>
+            <div class="flex items-center gap-3">
+              <span class={"h-2.5 w-2.5 rounded-full flex-shrink-0 " <>
+                            cond do
+                              user.is_speaking -> "bg-blue-500 animate-pulse"
+                              user.online -> "bg-green-500"
+                              true -> "bg-gray-400"
+                            end
+                          }></span>
+              <div>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{user.name}</p>
+                <p class={"text-xs " <>
+                            cond do
+                              user.is_speaking -> "text-blue-600 dark:text-blue-400"
+                              user.online -> "text-green-600 dark:text-green-400"
+                              true -> "text-gray-500 dark:text-gray-400"
+                            end
+                          }>
+                  <%= cond do %>
+                    <% user.is_speaking -> %> Falando...
+                    <% user.online -> %> Online
+                    <% true -> %> Offline
+                  <% end %>
+                </p>
+              </div>
             </div>
             <%= if user.is_speaking do %>
-              <.icon name="hero-volume-2" class="h-4 w-4 text-purple-800 animate-pulse" />
+              <.icon name="hero-signal-solid" class="h-4 w-4 text-blue-500 dark:text-blue-400" />
             <% end %>
           </div>
         <% end %>
       </div>
-    </div>
-  </div>
 
-  <hr class="border-gray-300" />
+      <%# Seção do Botão de Microfone %>
+      <div class="p-4 mt-auto border-t border-gray-300 dark:border-gray-700 flex flex-col items-center flex-shrink-0">
+        <button
+          class={[
+            "h-20 w-20 rounded-full flex items-center justify-center transition-all duration-200 ease-in-out shadow-lg",
+            "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800",
+            (@is_transmitting && "bg-red-500 hover:bg-red-600 text-white focus:ring-red-500") ||
+            "bg-purple-600 hover:bg-purple-700 text-white focus:ring-purple-500"
+          ]}
+          phx-hook="MicButton"
+          id="mic-button"
+          aria-pressed={@is_transmitting}
+        >
+          <.icon name="hero-microphone" class={["h-8 w-8", @is_transmitting && "animate-pulse"]} />
+        </button>
+        <p class="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
+          <%= if @is_transmitting, do: "Solte para parar de falar", else: "Pressione e segure para falar" %>
+        </p>
+      </div>
+    </aside>
 
-  <div class="p-4 text-center text-xs text-gray-500 bg-purple-100">
-    <p class="flex items-center justify-center gap-1 mb-2">
-      Powered by <span class="font-semibold text-purple-800">Erlang OTP</span>
-      and <span class="font-semibold text-purple-800">Elixir</span>
+    <%# ===== Área de Mensagens ===== %>
+    <section class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-850">
+      <%# O CABEÇALHO FOI MOVIDO PARA CIMA %>
+      <%# <div class="p-4 border-b border-gray-300 dark:border-gray-700 flex-shrink-0"> ... </div> REMOVED %>
+
+      <%# Container das mensagens com scroll %>
+      <div id="message-list" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <%= for message <- @messages do %>
+          <% is_own_message = message.user.id == @user.id %>
+          <div class={"flex flex-col " <> if is_own_message, do: "items-end", else: "items-start"}>
+            <div class={"max-w-lg rounded-lg px-4 py-2 shadow-sm " <>
+                          if is_own_message do
+                            "bg-purple-600 text-white dark:bg-purple-700"
+                          else
+                            "bg-white text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                          end
+                        }>
+              <div class="flex justify-between items-baseline mb-1 gap-2">
+                <span class={"text-xs font-semibold " <>
+                               if is_own_message do
+                                 "text-purple-200 dark:text-purple-300"
+                               else
+                                 "text-purple-700 dark:text-purple-300"
+                               end
+                             }>{message.user.name}</span>
+
+                <span class={"text-xs opacity-85 " <>
+                               if is_own_message do
+                                 "text-purple-200 dark:text-purple-300"
+                               else
+                                 "text-gray-500 dark:text-gray-400"
+                               end
+                             }>{message.date}</span>
+              </div>
+              <p class={"text-sm " <> if !is_own_message, do: "text-purple-900 dark:text-purple-400", else: ""}>{message.body}</p>
+            </div>
+          </div>
+        <% end %>
+        <div id="message-end" phx-update="ignore"></div>
+      </div>
+
+      <%# ===== Área de Input de Texto ===== %>
+      <div class="p-4 border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
+        <form phx-submit="send_message" class="flex items-center gap-3">
+          <input
+            type="text"
+            name="message"
+            placeholder="Digite sua mensagem..."
+            autocomplete="off"
+            class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+            
+            
+
+          />
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-offset-gray-900 disabled:opacity-50"
+            aria-label="Enviar mensagem"
+          >
+            Enviar
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </div> <%# Fim do Conteúdo Principal Flex %>
+
+  <%# ===== Rodapé (Opcional) ===== %>
+  <footer class="p-3 text-center text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400 border-t border-gray-300 dark:border-gray-700 flex-shrink-0">
+    <p class="flex items-center justify-center gap-1 mb-1">
+      Powered by <span class="font-semibold text-purple-700 dark:text-purple-300">Erlang/OTP</span>
+      & <span class="font-semibold text-purple-700 dark:text-purple-300">Elixir</span>
     </p>
-    <p class="font-medium text-purple-800">Criado por Matheus de Camargo Marques</p>
-  </div>
+    <p class="font-medium text-purple-700 dark:text-purple-300">Criado por Matheus de Camargo Marques</p>
+  </footer>
+
 </div>
+
+<%# ===== Considerações Adicionais ===== %>
+<%# ... (mantidas as mesmas) ... %>

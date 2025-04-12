@@ -91,11 +91,10 @@ defmodule WalkieTokie.Sender do
   @type is_talking :: boolean()
   @type audio_port :: Port | nil
   def init(args) do
-    IO.inspect(args)
     node_target = Keyword.get(args, :node_target, :default_node)
     audio_device = Keyword.get(args, :audio_device, "default")
 
-    IO.inspect(Phoenix.PubSub.subscribe(@pubsub, audio_topic()))
+    Phoenix.PubSub.subscribe(@pubsub, audio_topic())
 
     state = {
       {:connection_status, :disconnected},
@@ -146,11 +145,9 @@ defmodule WalkieTokie.Sender do
 
   def handle_info({:audio_chunk, chunk}, state) do
     Logger.info("Sender: Received audio chunk")
-    dbg(dict(state, :is_talking))
     if dict(state, :is_talking) do
       Logger.info("Sender: Sending audio chunk")
       node_target = dict(state, :node_target)
-      dbg(node_target)
       :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [Node.self(),chunk])
     end
 
@@ -231,8 +228,7 @@ defmodule WalkieTokie.Sender do
     {:noreply, state}
   end
 
-  def handle_info(msg, state) do
-    IO.inspect("Mensagem não tratada: #{msg}")
+  def handle_info(_msg, state) do
     {:noreply, state}
   end
 

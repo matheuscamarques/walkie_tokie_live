@@ -84,13 +84,13 @@ defmodule WalkieTokie.MicrophoneDriver do
 
   @type connection_status :: :disconnected | :connected
   @type audio_device :: binary()
-  @type accept_transfer :: binary()
+  @type accept_transfer :: boolean()
   @type chunk_data :: binary()
-  # Novo flag para indicar se está falando
   @type is_talking :: boolean()
   @type audio_port :: Port.t() | nil
+  @type stop_requested :: boolean()
+
   def init(args) do
-    IO.inspect(args)
     audio_device = Keyword.get(args, :audio_device, "default")
 
     state = {
@@ -98,34 +98,29 @@ defmodule WalkieTokie.MicrophoneDriver do
       {:audio_device, audio_device},
       {:accept_transfer, false},
       {:chunk_data, <<>>},
-      # Inicializa o flag de falando como falso
       {:is_talking, false},
-      # Adiciona um campo para o Port
-      {:audio_port, nil}
+      {:audio_port, nil},
+      # Novo estado para rastrear a solicitação de parada
+      {:stop_requested, false}
     }
 
     Process.send_after(self(), :try_connection, 1000)
     {:ok, state}
   end
 
-  def start_talking() do
-    Logger.info("Microfone Driver: Starting to talk...")
-    GenServer.cast(__MODULE__, :start_talking)
-  end
-
-  def stop_talking() do
-    GenServer.cast(__MODULE__, :stop_talking)
-  end
+  def start_talking(), do: GenServer.cast(__MODULE__, :start_talking)
+  def stop_talking(), do: GenServer.cast(__MODULE__, :stop_talking)
 
   def handle_cast(:start_talking, state) do
     Logger.info("CAST Microfone Driver: Starting to talk...")
     send(self(), :start_talking)
-    {:noreply, state}
+    # Reseta a flag de parada
+    {:noreply, state |> set_dict(:stop_requested, false)}
   end
 
   def handle_cast(:stop_talking, state) do
-    send(self(), :stop_talking)
-    {:noreply, state}
+    Logger.info("CAST Microfone Driver: Stop talking requested...")
+    {:noreply, set_dict(state, :stop_requested, true)}
   end
 
   @spec handle_info(:try_connection, dict_state) :: {:noreply, dict_state}
@@ -153,6 +148,8 @@ defmodule WalkieTokie.MicrophoneDriver do
           {
             System.find_executable("sox"),
             [
+              "--buffer",
+              "3200",
               "-d",
               "-b",
               "16",
@@ -181,7 +178,13 @@ defmodule WalkieTokie.MicrophoneDriver do
               "-D",
               "pulse",
               "-c",
-              "1"
+              "1",
+              # 100ms
+              "--buffer-time",
+              "100000",
+              # 25ms
+              "--period-time",
+              "25000"
             ]
           }
       end
@@ -196,38 +199,45 @@ defmodule WalkieTokie.MicrophoneDriver do
     end
   end
 
-  @spec handle_info(:stop_talking, dict_state) :: {:noreply, dict_state}
-  def handle_info(:stop_talking, state) do
-    updated_state = set_dict(state, :is_talking, false)
-    # Fecha o Port quando para de falar
-    if port = dict(updated_state, :audio_port) do
-      Port.close(port)
-    end
-
-    {:noreply, set_dict(updated_state, :audio_port, nil)}
-  end
-
   def handle_info({port, {:data, raw_audio}}, state) do
-    if dict(state, :is_talking) and port == dict(state, :audio_port) do
-      Logger.info("Sending audio chunks:")
+    if port == dict(state, :audio_port) and dict(state, :is_talking) do
+      Logger.info("Sending audio chunk:")
       Phoenix.PubSub.broadcast(@pubsub, audio_topic(), {:audio_chunk, raw_audio})
-      {:noreply, state}
+
+      # Se a parada foi solicitada, inicia o processo de finalização
+      if dict(state, :stop_requested) do
+        # Envia uma mensagem interna para iniciar o fechamento seguro
+        send(self(), :finalize_stop_talking)
+        # Marca como não falando mais
+        {:noreply, state |> set_dict(:is_talking, false)}
+      else
+        {:noreply, state}
+      end
     else
       {:noreply, state}
     end
   end
 
+  def handle_info(:finalize_stop_talking, state) do
+    Logger.info("Finalizando a parada da gravação...")
+
+    if port = dict(state, :audio_port) do
+      # Process.sleep(10000)
+      Port.close(port)
+    end
+
+    {:noreply, set_dict(state, :audio_port, nil)}
+  end
+
   def handle_info(:send_audio_chunk, state) do
-    if dict(state, :is_talking) do
+    if dict(state, :is_talking) and not dict(state, :stop_requested) do
       # Solicita mais dados do Port
       if port = dict(state, :audio_port) do
         send(self(), {:port_command, port, :read, []})
       end
-
-      {:noreply, state}
-    else
-      {:noreply, state}
     end
+
+    {:noreply, state}
   end
 
   def handle_info({:port_command, port, command, args}, state) do
@@ -241,8 +251,7 @@ defmodule WalkieTokie.MicrophoneDriver do
     {:noreply, state}
   end
 
-  def handle_info(msg, state) do
-    IO.inspect("Mensagem não tratada: #{msg}")
+  def handle_info(_msg, state) do
     {:noreply, state}
   end
 
@@ -253,13 +262,15 @@ defmodule WalkieTokie.MicrophoneDriver do
           | :chunk_data
           | :is_talking
           | :audio_port
+          | :stop_requested
   @type dict_state :: {
           {:connection_status, connection_status},
           {:audio_device, audio_device},
           {:accept_transfer, accept_transfer},
           {:chunk_data, chunk_data},
           {:is_talking, is_talking},
-          {:audio_port, audio_port}
+          {:audio_port, audio_port},
+          {:stop_requested, stop_requested}
         }
   @spec dict(dict_state, dict_index) ::
           connection_status
@@ -268,10 +279,11 @@ defmodule WalkieTokie.MicrophoneDriver do
           | chunk_data
           | is_talking
           | audio_port
+          | stop_requested
   def dict(
         {{:connection_status, connection_status}, {:audio_device, audio_device},
          {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data},
-         {:is_talking, is_talking}, {:audio_port, audio_port}},
+         {:is_talking, is_talking}, {:audio_port, audio_port}, {:stop_requested, stop_requested}},
         atom
       ) do
     case atom do
@@ -281,14 +293,15 @@ defmodule WalkieTokie.MicrophoneDriver do
       :chunk_data -> chunk_data
       :is_talking -> is_talking
       :audio_port -> audio_port
+      :stop_requested -> stop_requested
     end
   end
 
-  @spec set_dict(dict_state, :is_talking | :audio_port, any()) :: dict_state
+  @spec set_dict(dict_state, dict_index, any()) :: dict_state
   def set_dict(
         {{:connection_status, connection_status}, {:audio_device, audio_device},
          {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data},
-         {:is_talking, is_talking}, {:audio_port, audio_port}},
+         {:is_talking, is_talking}, {:audio_port, audio_port}, {:stop_requested, stop_requested}},
         key,
         new_value
       ) do
@@ -296,22 +309,22 @@ defmodule WalkieTokie.MicrophoneDriver do
       :is_talking ->
         {{:connection_status, connection_status}, {:audio_device, audio_device},
          {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, new_value},
-         {:audio_port, audio_port}}
+         {:audio_port, audio_port}, {:stop_requested, stop_requested}}
 
       :audio_port ->
         {{:connection_status, connection_status}, {:audio_device, audio_device},
          {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data},
-         {:is_talking, is_talking}, {:audio_port, new_value}}
+         {:is_talking, is_talking}, {:audio_port, new_value}, {:stop_requested, stop_requested}}
+
+      :stop_requested ->
+        {{:connection_status, connection_status}, {:audio_device, audio_device},
+         {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data},
+         {:is_talking, is_talking}, {:audio_port, audio_port}, {:stop_requested, new_value}}
 
       _ ->
         {{:connection_status, connection_status}, {:audio_device, audio_device},
          {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data},
-         {:is_talking, is_talking}, {:audio_port, audio_port}}
+         {:is_talking, is_talking}, {:audio_port, audio_port}, {:stop_requested, stop_requested}}
     end
-  end
-
-  def set_dict(state, _key, _new_value) do
-    # Retorna o estado original se a chave não for :is_talking ou :audio_port
-    state
   end
 end

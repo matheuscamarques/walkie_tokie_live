@@ -1,0 +1,21 @@
+{
+    "name": "Walkie Tokie - OTP TELECOM",
+    "short_name": "Walkie Tokie",
+    "description": "Walkie Tokie - Project Powered by Erlang OTP and Elixir",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#993399",
+    "theme_color": "#993399",
+    "icons": [
+      {
+        "src": "/images/logo.svg",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/images/logo.svg",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }

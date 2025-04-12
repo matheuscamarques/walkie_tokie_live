@@ -16,13 +16,13 @@
 //
 
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
-import "phoenix_html"
+import "phoenix_html";
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
-import {LiveSocket} from "phoenix_live_view"
-import topbar from "../vendor/topbar"
+import { Socket } from "phoenix";
+import { LiveSocket } from "phoenix_live_view";
+import topbar from "../vendor/topbar";
 
-let Hooks = {}
+let Hooks = {};
 Hooks.MicButton = {
   mounted() {
     this.el.addEventListener("mousedown", () => {
@@ -40,27 +40,71 @@ Hooks.MicButton = {
     this.el.addEventListener("touchend", () => {
       this.pushEvent("stop_transmission");
     });
-  }
-}
+  },
+};
 
-let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+let granted = false;
+Hooks.PushNotification = {
+  mounted() {
+    if (!("Notification" in window)) {
+      console.log("Este navegador não suporta notificações de desktop.");
+      return;
+    }
+
+    Notification.requestPermission().then((permission) => {
+      granted = permission === "granted";
+      if (granted) {
+        console.log("Permissão para notificações concedida!");
+      } else if (permission === "denied") {
+        console.log("Permissão para notificações negada pelo usuário.");
+      } else if (permission === "default") {
+        console.log("O usuário ainda não respondeu ao pedido de permissão.");
+      }
+    });
+
+    this.handleEvent("push-notification", ({ title, body }) => {
+      console.log("hello")
+      if (granted) {
+        new Notification(title, { body });
+      } else if (Notification.permission !== "denied") {
+        console.log("Notificação não exibida porque a permissão não foi concedida.");
+      }
+    });
+  },
+};
+
+let csrfToken = document
+  .querySelector("meta[name='csrf-token']")
+  .getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken},
-  hooks: Hooks
-})
+  params: { _csrf_token: csrfToken },
+  hooks: Hooks,
+});
 
 // Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
-window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
-window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
+window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
+window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
 
 // connect if there are any LiveViews on the page
-liveSocket.connect()
+liveSocket.connect();
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
-window.liveSocket = liveSocket
+window.liveSocket = liveSocket;
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then((registration) => {
+        console.log("Service Worker registrado com sucesso:", registration);
+      })
+      .catch((error) => {
+        console.log("Erro ao registrar o Service Worker:", error);
+      });
+  });
+}
