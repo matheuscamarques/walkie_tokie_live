@@ -153,6 +153,7 @@ defmodule WalkieTokie.Sender do
         length: byte_size(chunk)
       )
 
+      Appsignal.set_gauge("data_upload", byte_size(chunk))
       :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [Node.self(), chunk])
     end
 

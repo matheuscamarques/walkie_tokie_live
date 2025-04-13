@@ -57,7 +57,7 @@ defmodule WalkieTokie.Receiver do
       chunk: chunk,
       length: byte_size(chunk)
     )
-
+    Appsignal.set_gauge("data_download", byte_size(chunk))
     PubSub.broadcast(
       WalkieTokie.PubSub,
       "node_speaking",
