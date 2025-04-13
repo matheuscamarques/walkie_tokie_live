@@ -149,7 +149,6 @@ defmodule WalkieTokie.Sender do
 
       Logger.info("Sending audio chunk",
         node_target: inspect(node_target),
-        chunk: chunk,
         length: byte_size(chunk)
       )
 

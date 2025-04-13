@@ -54,7 +54,6 @@ defmodule WalkieTokie.Receiver do
   def handle_cast({:audio_chunk, from_node_name, chunk}, port) do
     Logger.info("Received audio chunk",
       from_node_name: inspect(from_node_name),
-      chunk: chunk,
       length: byte_size(chunk)
     )
     Appsignal.set_gauge("data_download", byte_size(chunk))
