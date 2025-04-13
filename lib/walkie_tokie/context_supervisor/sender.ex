@@ -154,6 +154,7 @@ defmodule WalkieTokie.Sender do
       )
 
       Appsignal.set_gauge("data_upload", byte_size(chunk))
+      Appsignal.set_gauge("node_data_upload", byte_size(chunk), %{node: inspect(Node.self())})
       :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [Node.self(), chunk])
     end
 
