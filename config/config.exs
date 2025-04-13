@@ -15,6 +15,7 @@ config :walkie_tokie, :master_node, :"server@10.241.169.206"
 
 # Configures the endpoint
 port = String.to_integer(System.get_env("PORT") || "4000")
+
 config :walkie_tokie, WalkieTokieWeb.Endpoint,
   url: [host: "localhost", port: port],
   adapter: Bandit.PhoenixAdapter,
@@ -57,9 +58,7 @@ config :tailwind,
   ]
 
 # Configures Elixir's Logger
-config :logger, :console,
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+config :logger, backends: [:console, {Appsignal.Logger.Backend, [group: "phoenix"]}]
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
@@ -67,3 +66,5 @@ config :phoenix, :json_library, Jason
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+import_config "appsignal.exs"

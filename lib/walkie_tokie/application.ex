@@ -7,6 +7,10 @@ defmodule WalkieTokie.Application do
 
   @impl true
   def start(_type, _args) do
+    Appsignal.Logger.Handler.add("phoenix")
+    Appsignal.Phoenix.LiveView.attach()
+    Logger.add_backend(Appsignal.Logger.Backend, group: "phoenix")
+
     children = [
       WalkieTokieWeb.Telemetry,
       # WalkieTokie.Repo,
@@ -16,13 +20,16 @@ defmodule WalkieTokie.Application do
       {DNSCluster, query: Application.get_env(:walkie_tokie, :dns_cluster_query) || :ignore},
       Supervisor.child_spec(
         {Phoenix.PubSub, name: WalkieTokie.PubSub},
-        id: WalkieTokie.PubSub # ID único para o supervisor
+        # ID único para o supervisor
+        id: WalkieTokie.PubSub
       ),
 
       # Segunda instância do PubSub (exemplo)
       Supervisor.child_spec(
-        {Phoenix.PubSub, name: WalkieTokie.ChatPubSub}, # Nome único para registro
-        id: WalkieTokie.ChatPubSub # ID único para o supervisor (diferente do primeiro)
+        # Nome único para registro
+        {Phoenix.PubSub, name: WalkieTokie.ChatPubSub},
+        # ID único para o supervisor (diferente do primeiro)
+        id: WalkieTokie.ChatPubSub
       ),
       # Start the Finch HTTP client for sending emails
       {Finch, name: WalkieTokie.Finch},

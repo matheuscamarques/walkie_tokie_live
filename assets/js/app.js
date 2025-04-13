@@ -37,9 +37,16 @@ Hooks.MicButton = {
     this.el.addEventListener("touchstart", () => {
       this.pushEvent("start_transmission");
     });
+    
+    this.el.addEventListener("mouseenter", () => {
+      this.pushEvent("start_transmission");
+    });
+
     this.el.addEventListener("touchend", () => {
       this.pushEvent("stop_transmission");
     });
+
+   
   },
 };
 

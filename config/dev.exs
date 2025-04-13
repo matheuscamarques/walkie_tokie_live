@@ -15,6 +15,7 @@ import Config
 # to bundle .js and .css sources.
 # Binding to loopback ipv4 address prevents access from other machines.
 port = String.to_integer(System.get_env("PORT") || "4000")
+
 config :walkie_tokie, WalkieTokieWeb.Endpoint,
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {127, 0, 0, 1}, port: port],
@@ -81,3 +82,5 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+config :appsignal, :config, active: true

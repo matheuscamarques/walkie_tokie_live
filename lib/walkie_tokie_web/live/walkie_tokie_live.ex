@@ -46,7 +46,6 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
      |> assign(messages: [])}
   end
 
-
   def handle_event("send_message", %{"message" => message}, socket) do
     if message != "" do
       new_message = %{user: socket.assigns.user, body: message, date: now()}
@@ -61,7 +60,6 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
     end
   end
 
-
   def handle_event("start_transmission", _params, socket) do
     MicrophoneDriver.start_talking()
     {:noreply, assign(socket, :is_transmitting, true)}
@@ -73,7 +71,6 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
   end
 
   def handle_info({:message, message}, socket) do
-
     if socket.assigns.user.name != message.user.name do
       # Enviar notificação para o cliente
       push_event(socket, "push-notification", %{

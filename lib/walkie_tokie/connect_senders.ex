@@ -11,7 +11,7 @@ defmodule WalkieTokie.ConnectSenders do
 
   @impl true
   def init(_) do
-    Logger.info("[ConnectSenders] Iniciando verificação de nós conectados.")
+    Logger.info("[ConnectSenders] Start ConectSenders")
     Process.send_after(self(), :check_nodes, 0)
     {:ok, MapSet.new()}
   end
@@ -26,8 +26,8 @@ defmodule WalkieTokie.ConnectSenders do
       Enum.reject(current_nodes, fn node -> MapSet.member?(already_started, node) end)
 
     Enum.each(new_nodes, fn node ->
-      Logger.info("[ConnectSenders] Iniciando sender para #{node}")
-      SenderDynamicSupervisor.start_sender([node_target: node])
+      Logger.info("[ConnectSenders] Starting sender for node: #{inspect(node)}")
+      SenderDynamicSupervisor.start_sender(node_target: node)
     end)
 
     Process.send_after(self(), :check_nodes, @check_interval)

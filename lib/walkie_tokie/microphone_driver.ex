@@ -112,14 +112,12 @@ defmodule WalkieTokie.MicrophoneDriver do
   def stop_talking(), do: GenServer.cast(__MODULE__, :stop_talking)
 
   def handle_cast(:start_talking, state) do
-    Logger.info("CAST Microfone Driver: Starting to talk...")
     send(self(), :start_talking)
     # Reseta a flag de parada
     {:noreply, state |> set_dict(:stop_requested, false)}
   end
 
   def handle_cast(:stop_talking, state) do
-    Logger.info("CAST Microfone Driver: Stop talking requested...")
     {:noreply, set_dict(state, :stop_requested, true)}
   end
 
@@ -138,8 +136,6 @@ defmodule WalkieTokie.MicrophoneDriver do
 
   @spec handle_info(:start_talking, dict_state) :: {:noreply, dict_state}
   def handle_info(:start_talking, state) do
-    Logger.info("Iniciando gravação de áudio...")
-
     updated_state = set_dict(state, :is_talking, true)
 
     {path, args} =
@@ -201,7 +197,6 @@ defmodule WalkieTokie.MicrophoneDriver do
 
   def handle_info({port, {:data, raw_audio}}, state) do
     if port == dict(state, :audio_port) and dict(state, :is_talking) do
-      Logger.info("Sending audio chunk:")
       Phoenix.PubSub.broadcast(@pubsub, audio_topic(), {:audio_chunk, raw_audio})
 
       # Se a parada foi solicitada, inicia o processo de finalização
@@ -219,8 +214,6 @@ defmodule WalkieTokie.MicrophoneDriver do
   end
 
   def handle_info(:finalize_stop_talking, state) do
-    Logger.info("Finalizando a parada da gravação...")
-
     if port = dict(state, :audio_port) do
       # Process.sleep(10000)
       Port.close(port)

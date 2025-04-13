@@ -144,11 +144,16 @@ defmodule WalkieTokie.Sender do
   end
 
   def handle_info({:audio_chunk, chunk}, state) do
-    Logger.info("Sender: Received audio chunk")
     if dict(state, :is_talking) do
-      Logger.info("Sender: Sending audio chunk")
       node_target = dict(state, :node_target)
-      :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [Node.self(),chunk])
+
+      Logger.info("Sending audio chunk",
+        node_target: inspect(node_target),
+        chunk: chunk,
+        length: byte_size(chunk)
+      )
+
+      :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [Node.self(), chunk])
     end
 
     {:noreply, set_dict(state, :is_talking, true)}
@@ -173,7 +178,7 @@ defmodule WalkieTokie.Sender do
   def handle_info(:start_talking, state) do
     updated_state = set_dict(state, :is_talking, true)
     # audio_device = dict(updated_state, :audio_device)
-    #path = System.find_executable("arecord")
+    # path = System.find_executable("arecord")
 
     # port =
     #   Port.open({:spawn_executable, path}, [
@@ -254,8 +259,12 @@ defmodule WalkieTokie.Sender do
         {
           {:connection_status, connection_status},
           {:node_target, node_target},
-         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}},
+          {:audio_device, audio_device},
+          {:accept_transfer, accept_transfer},
+          {:chunk_data, chunk_data},
+          {:is_talking, is_talking},
+          {:audio_port, audio_port}
+        },
         atom
       ) do
     case atom do
@@ -274,28 +283,61 @@ defmodule WalkieTokie.Sender do
         {
           {:connection_status, connection_status},
           {:node_target, node_target},
-         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}},
+          {:audio_device, audio_device},
+          {:accept_transfer, accept_transfer},
+          {:chunk_data, chunk_data},
+          {:is_talking, is_talking},
+          {:audio_port, audio_port}
+        },
         key,
         new_value
       ) do
     case key do
-      :connection_status -> {{:connection_status, new_value}, {:node_target, node_target}, {:audio_device, audio_device}, {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
-      :node_target -> {{:connection_status, connection_status}, {:node_target, new_value}, {:audio_device, audio_device}, {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
-      :audio_device -> {{:connection_status, connection_status}, {:node_target, node_target}, {:audio_device, new_value}, {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
-      :accept_transfer -> {{:connection_status, connection_status}, {:node_target, node_target}, {:audio_device, audio_device}, {:accept_transfer, new_value}, {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
-      :chunk_data -> {{:connection_status, connection_status}, {:node_target, node_target}, {:audio_device, audio_device}, {:accept_transfer, accept_transfer}, {:chunk_data, new_value}, {:is_talking, is_talking}, {:audio_port, audio_port}}
-      :is_talking -> {{:connection_status, connection_status}, {:node_target, node_target}, {:audio_device, audio_device}, {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, new_value}, {:audio_port, audio_port}}
-      :audio_port -> {{:connection_status, connection_status}, {:node_target, node_target}, {:audio_device, audio_device}, {:accept_transfer, accept_transfer}, {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, new_value}}
-      _ -> {
-        {:connection_status, connection_status},
-        {:node_target, node_target},
-        {:audio_device, audio_device},
-        {:accept_transfer, accept_transfer},
-        {:chunk_data, chunk_data},
-        {:is_talking, is_talking},
-        {:audio_port, audio_port}
-      }
+      :connection_status ->
+        {{:connection_status, new_value}, {:node_target, node_target},
+         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+
+      :node_target ->
+        {{:connection_status, connection_status}, {:node_target, new_value},
+         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+
+      :audio_device ->
+        {{:connection_status, connection_status}, {:node_target, node_target},
+         {:audio_device, new_value}, {:accept_transfer, accept_transfer},
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+
+      :accept_transfer ->
+        {{:connection_status, connection_status}, {:node_target, node_target},
+         {:audio_device, audio_device}, {:accept_transfer, new_value}, {:chunk_data, chunk_data},
+         {:is_talking, is_talking}, {:audio_port, audio_port}}
+
+      :chunk_data ->
+        {{:connection_status, connection_status}, {:node_target, node_target},
+         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+         {:chunk_data, new_value}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+
+      :is_talking ->
+        {{:connection_status, connection_status}, {:node_target, node_target},
+         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+         {:chunk_data, chunk_data}, {:is_talking, new_value}, {:audio_port, audio_port}}
+
+      :audio_port ->
+        {{:connection_status, connection_status}, {:node_target, node_target},
+         {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, new_value}}
+
+      _ ->
+        {
+          {:connection_status, connection_status},
+          {:node_target, node_target},
+          {:audio_device, audio_device},
+          {:accept_transfer, accept_transfer},
+          {:chunk_data, chunk_data},
+          {:is_talking, is_talking},
+          {:audio_port, audio_port}
+        }
     end
   end
 end

@@ -12,6 +12,7 @@ defmodule WalkieTokie.SenderDynamicSupervisor do
 
   def start_sender(args \\ []) do
     node_target = Keyword.get(args, :node_target, :default_node)
+
     child_spec = %{
       id: node_target,
       start: {WalkieTokie.Sender, :start_link, [args]},

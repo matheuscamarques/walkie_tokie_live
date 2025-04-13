@@ -24,12 +24,18 @@ defmodule WalkieTokie.MasterConnector do
         {:noreply, state}
 
       false ->
-        Logger.warning("Falha ao conectar ao master node: #{inspect(master_node)}. Tentando novamente em #{@reconnect_interval}ms.")
+        Logger.warning(
+          "Falha ao conectar ao master node: #{inspect(master_node)}. Tentando novamente em #{@reconnect_interval}ms."
+        )
+
         Process.send_after(self(), :connect, @reconnect_interval)
         {:noreply, state}
 
       :ignored ->
-        Logger.error("Node.connect ignorado porque estamos no mesmo node? #{inspect(master_node)}")
+        Logger.error(
+          "Node.connect ignorado porque estamos no mesmo node? #{inspect(master_node)}"
+        )
+
         {:noreply, state}
     end
   end

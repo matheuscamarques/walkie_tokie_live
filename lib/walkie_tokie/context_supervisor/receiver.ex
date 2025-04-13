@@ -6,12 +6,18 @@ defmodule WalkieTokie.Receiver do
   @play_path System.find_executable("play")
   @play_args [
     "-q",
-    "--buffer", "4096",
-    "-t", "raw",
-    "-e", "signed",
-    "-b", "16",
-    "-c", "1",
-    "-r", "16000",
+    "--buffer",
+    "4096",
+    "-t",
+    "raw",
+    "-e",
+    "signed",
+    "-b",
+    "16",
+    "-c",
+    "1",
+    "-r",
+    "16000",
     "-"
   ]
 
@@ -41,12 +47,16 @@ defmodule WalkieTokie.Receiver do
         args: @play_args
       ])
 
-    IO.puts("[Receiver] Porta para aplay aberta.")
     {:ok, port}
   end
 
   @impl true
   def handle_cast({:audio_chunk, from_node_name, chunk}, port) do
+    Logger.info("Received audio chunk",
+      from_node_name: inspect(from_node_name),
+      chunk: chunk,
+      length: byte_size(chunk)
+    )
 
     PubSub.broadcast(
       WalkieTokie.PubSub,
