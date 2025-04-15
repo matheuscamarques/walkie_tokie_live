@@ -56,9 +56,11 @@ defmodule WalkieTokie.Receiver do
       from_node_name: inspect(from_node_name),
       length: byte_size(chunk)
     )
+
     Appsignal.set_gauge("data_download", byte_size(chunk))
 
     Appsignal.set_gauge("node_data_download", byte_size(chunk), %{node: inspect(Node.self())})
+
     PubSub.broadcast(
       WalkieTokie.PubSub,
       "node_speaking",
