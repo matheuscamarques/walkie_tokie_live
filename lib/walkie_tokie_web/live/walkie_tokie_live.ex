@@ -1,7 +1,7 @@
 defmodule WalkieTokieWeb.WalkieTokieLive do
-  alias Phoenix.PubSub
   use WalkieTokieWeb, :live_view
   alias WalkieTokie.MicrophoneDriver
+  alias Phoenix.PubSub
 
   @inactivity_timeout 10_000
 
