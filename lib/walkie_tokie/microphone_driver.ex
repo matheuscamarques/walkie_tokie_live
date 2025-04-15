@@ -202,7 +202,7 @@ defmodule WalkieTokie.MicrophoneDriver do
       # Se a parada foi solicitada, inicia o processo de finalização
       if dict(state, :stop_requested) do
         # Envia uma mensagem interna para iniciar o fechamento seguro
-        send(self(), :finalize_stop_talking)
+        #send(self(), :finalize_stop_talking)
         # Marca como não falando mais
         {:noreply, state |> set_dict(:is_talking, false)}
       else
