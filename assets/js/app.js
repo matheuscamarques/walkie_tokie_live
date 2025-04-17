@@ -50,6 +50,21 @@ Hooks.MicButton = {
   },
 };
 
+Hooks.MessageInput = {
+  mounted() {
+    this.el.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const message = this.el.value;
+        if (message.trim() !== "") {
+          this.pushEvent("send_message", { message });
+          this.el.value = "";
+        }
+      }
+    });
+  }
+}
+
 let granted = false;
 Hooks.PushNotification = {
   mounted() {
