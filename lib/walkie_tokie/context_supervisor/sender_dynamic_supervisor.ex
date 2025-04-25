@@ -1,4 +1,9 @@
 defmodule WalkieTokie.SenderDynamicSupervisor do
+  @moduledoc """
+  DynamicSupervisor responsible for starting senders for each node in the cluster.
+  It will start a sender for each node in the cluster that is not already started.
+  It will also log the connection status.
+  """
   use DynamicSupervisor
 
   def start_link(_init_arg) do

@@ -1,4 +1,8 @@
 defmodule WalkieTokie.Sender do
+  @moduledoc """
+  This module is responsible for sending audio data to a remote node.
+  It uses a state machine to manage the connection and transfer process.
+  """
   require Logger
   use GenServer
 

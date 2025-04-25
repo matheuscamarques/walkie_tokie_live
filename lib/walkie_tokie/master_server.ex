@@ -1,4 +1,11 @@
 defmodule WalkieTokie.MasterConnector do
+  @moduledoc """
+  GenServer handling the connection to the master node.
+  This module is responsible for connecting to the master node and
+  reconnecting if the connection is lost.
+  It will try to connect every 10 seconds until it succeeds.
+  It will also log the connection status.
+  """
   use GenServer
   require Logger
 

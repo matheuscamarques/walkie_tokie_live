@@ -1,4 +1,10 @@
 defmodule WalkieTokie.ConnectSenders do
+  @moduledoc """
+  GenServer responsible for connecting to all nodes in the cluster.
+  It will check every 10 seconds if there are new nodes in the cluster
+  and start a sender for each new node.
+  It will also log the connection status.
+  """
   alias WalkieTokie.SenderDynamicSupervisor
   use GenServer
   require Logger

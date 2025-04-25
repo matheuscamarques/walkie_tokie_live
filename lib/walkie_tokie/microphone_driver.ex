@@ -1,4 +1,10 @@
 defmodule WalkieTokie.MicrophoneDriver do
+  @moduledoc """
+  GenServer handling the microphone input and audio streaming.
+  This module is responsible for capturing audio from the microphone
+  and streaming it to the connected nodes.
+  It will also handle the connection status and audio device.
+  """
   require Logger
   use GenServer
 
@@ -87,7 +93,7 @@ defmodule WalkieTokie.MicrophoneDriver do
   @type accept_transfer :: boolean()
   @type chunk_data :: binary()
   @type is_talking :: boolean()
-  @type audio_port :: Port.t() | nil
+  @type audio_port :: Port | nil
   @type stop_requested :: boolean()
 
   def init(args) do
