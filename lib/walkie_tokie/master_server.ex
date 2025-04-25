@@ -23,27 +23,58 @@ defmodule WalkieTokie.MasterConnector do
   end
 
   def handle_info(:connect, state) do
-    master_node = Application.get_env(:walkie_tokie, :master_node)
+    master_nodes = get_master_nodes()
 
+    Enum.each(master_nodes, fn master_node ->
+      try_connect(master_node, state)
+    end)
+
+    {:noreply, state}
+  end
+
+  # Private helper functions
+  # Retrieves the master nodes from the application environment
+  defp get_master_nodes do
+    Application.get_env(:walkie_tokie, :master_nodes)
+  end
+
+  # Attempts to connect to a given master node
+  defp try_connect(master_node, state) do
     case Node.connect(master_node) do
       true ->
-        Logger.info("Conectado ao master node: #{inspect(master_node)}")
+        log_connection_success(master_node)
         {:noreply, state}
 
       false ->
-        Logger.warning(
-          "Falha ao conectar ao master node: #{inspect(master_node)}. Tentando novamente em #{@reconnect_interval}ms."
-        )
-
-        Process.send_after(self(), :connect, @reconnect_interval)
+        log_connection_failure(master_node)
+        schedule_reconnect()
         {:noreply, state}
 
       :ignored ->
-        Logger.error(
-          "Node.connect ignorado porque estamos no mesmo node? #{inspect(master_node)}"
-        )
-
+        log_connection_ignored(master_node)
         {:noreply, state}
     end
+  end
+
+  # Logs a successful connection to the master node
+  defp log_connection_success(master_node) do
+    Logger.info("Conectado ao master node: #{inspect(master_node)}")
+  end
+
+  # Logs a failure to connect to the master node
+  defp log_connection_failure(master_node) do
+    Logger.warning(
+      "Falha ao conectar ao master node: #{inspect(master_node)}. Tentando novamente em #{@reconnect_interval}ms."
+    )
+  end
+
+  # Logs that the connection was ignored because it's the same node
+  defp log_connection_ignored(master_node) do
+    Logger.error("Node.connect ignorado porque estamos no mesmo node? #{inspect(master_node)}")
+  end
+
+  # Schedules a reconnection attempt
+  defp schedule_reconnect do
+    Process.send_after(self(), :connect, @reconnect_interval)
   end
 end

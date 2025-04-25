@@ -7,7 +7,12 @@
 # General application configuration
 import Config
 
-config :walkie_tokie, :master_node, :"server@10.241.169.206"
+# :master_nodes is a list of nodes that this node will connect to
+# The nodes are defined in the form of a tuple with the node name and the IP address
+# The node name is defined in the form of a string with the format "node@ip_address"
+config :walkie_tokie, :master_nodes, [
+  :"server@10.241.169.206",
+]
 
 # config :walkie_tokie,
 #   ecto_repos: [WalkieTokie.Repo],
