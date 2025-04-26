@@ -1,4 +1,4 @@
-defmodule WalkieTokie.Transfer_FSM do
+defmodule WalkieTokie.TransferFSM do
   @moduledoc """
   Finite State Machine used for controlling audio transfer lifecycle.
   """
