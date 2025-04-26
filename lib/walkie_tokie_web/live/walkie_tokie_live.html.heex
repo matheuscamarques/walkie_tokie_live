@@ -98,7 +98,7 @@
           id="mic-button"
           aria-pressed={@is_transmitting}
         >
-          <.icon name="hero-microphone" class={["h-8 w-8", @is_transmitting && "animate-pulse"]} />
+          <.icon name="hero-microphone" class={Enum.join(["h-8 w-8", @is_transmitting && "animate-pulse"], " ")} />
         </button>
         <p class="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
           {if @is_transmitting,

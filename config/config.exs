@@ -11,7 +11,7 @@ import Config
 # The nodes are defined in the form of a tuple with the node name and the IP address
 # The node name is defined in the form of a string with the format "node@ip_address"
 config :walkie_tokie, :master_nodes, [
-  :"server@10.241.169.206",
+  :"server@10.241.169.206"
 ]
 
 # config :walkie_tokie,
