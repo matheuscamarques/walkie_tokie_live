@@ -42,35 +42,24 @@ defmodule WalkieTokie.MasterConnector do
   defp try_connect(master_node, state) do
     case Node.connect(master_node) do
       true ->
-        log_connection_success(master_node)
+        Logger.info("Conectado ao master node: #{inspect(master_node)}")
         {:noreply, state}
 
       false ->
-        log_connection_failure(master_node)
+        Logger.warning(
+          "Falha ao conectar ao master node: #{inspect(master_node)}. Tentando novamente em #{@reconnect_interval}ms."
+        )
+
         schedule_reconnect()
         {:noreply, state}
 
       :ignored ->
-        log_connection_ignored(master_node)
+        Logger.error(
+          "Node.connect ignorado porque estamos no mesmo node? #{inspect(master_node)}"
+        )
+
         {:noreply, state}
     end
-  end
-
-  # Logs a successful connection to the master node
-  defp log_connection_success(master_node) do
-    Logger.info("Conectado ao master node: #{inspect(master_node)}")
-  end
-
-  # Logs a failure to connect to the master node
-  defp log_connection_failure(master_node) do
-    Logger.warning(
-      "Falha ao conectar ao master node: #{inspect(master_node)}. Tentando novamente em #{@reconnect_interval}ms."
-    )
-  end
-
-  # Logs that the connection was ignored because it's the same node
-  defp log_connection_ignored(master_node) do
-    Logger.error("Node.connect ignorado porque estamos no mesmo node? #{inspect(master_node)}")
   end
 
   # Schedules a reconnection attempt
