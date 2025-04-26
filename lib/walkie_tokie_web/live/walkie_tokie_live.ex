@@ -24,6 +24,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
           id: node,
           name: Atom.to_string(node),
           online: true,
+          inactive: false,
           is_speaking: false,
           last_active_at: current_time
         }
@@ -39,6 +40,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
          id: Node.self(),
          name: Atom.to_string(Node.self()),
          online: true,
+         inactive: false,
          is_speaking: false,
          last_active_at: current_time
        }
@@ -91,7 +93,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
       socket.assigns.users
       |> Enum.map(fn user ->
         if Atom.to_string(user.id) == Atom.to_string(from_node_name) do
-          %{user | is_speaking: true, online: true, last_active_at: current_time}
+          %{user | is_speaking: true, inactive: false, last_active_at: current_time}
         else
           %{user | is_speaking: false}
         end
@@ -128,7 +130,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
       Enum.map(socket.assigns.users, fn user ->
         if user.online &&
              time_diff_in_seconds(user.last_active_at, now) > @inactivity_timeout / 1000 do
-          %{user | online: false, is_speaking: false}
+          %{user | inactive: true, is_speaking: false}
         else
           user
         end
