@@ -1,7 +1,7 @@
 const CACHE_NAME = 'v0';
 const urlsToCache = [
   '/assets/app.css', // Adicione seus arquivos CSS
-  '/assets/app.js',  // Adicione seus arquivos JavaScript
+  // '/assets/app.js',  // Adicione seus arquivos JavaScript
   '/images/logo.svg', // Adicione seus ícones
   // Adicione outras URLs de assets que você quer cachear
 ];
