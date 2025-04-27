@@ -1,4 +1,12 @@
 defmodule WalkieTokie.Receiver do
+  @moduledoc """
+  This module is responsible for receiving audio chunks from the nodes and playing them
+  using the `play` command line tool. It uses a GenServer to manage the port and handle
+  incoming audio data. The audio data is sent to the `play` command via a port, which
+  allows for streaming audio data to be played in real-time.
+  The `play` command is a part of the SoX (Sound eXchange) package, which is a command-line
+  utility for converting and processing audio files.
+  """
   alias Phoenix.PubSub
   require Logger
   use GenServer

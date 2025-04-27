@@ -61,22 +61,25 @@
               </span>
               <div>
                 <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{user.name}</p>
-                <p class={"text-xs " <>
-                            cond do
-                              user.is_speaking -> "text-blue-600 dark:text-blue-400"
-                              user.online -> "text-green-600 dark:text-green-400"
-                              true -> "text-gray-500 dark:text-gray-400"
-                            end
-                          }>
-                  <%= cond do %>
-                    <% user.is_speaking -> %>
+
+                <%= cond do %>
+                  <% user.is_speaking -> %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
                       Falando...
-                    <% user.online -> %>
+                    </span>
+                  <% user.online && user.inactive -> %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-200 text-yellow-600 dark:bg-yellow-600 dark:text-yellow-100">
+                      Inativo
+                    </span>
+                  <% user.online -> %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
                       Online
-                    <% true -> %>
+                    </span>
+                  <% true -> %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                       Offline
-                  <% end %>
-                </p>
+                    </span>
+                <% end %>
               </div>
             </div>
             <%= if user.is_speaking do %>
@@ -98,17 +101,20 @@
           id="mic-button"
           aria-pressed={@is_transmitting}
         >
-          <.icon name="hero-microphone" class={["h-8 w-8", @is_transmitting && "animate-pulse"]} />
+          <.icon
+            name="hero-microphone"
+            class={Enum.join(["h-8 w-8", @is_transmitting && "animate-pulse"], " ")}
+          />
         </button>
         <p class="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
           {if @is_transmitting,
-            do: "Solte para parar de falar ou pare de passar o mouse",
-            else: "Pressione e segure para falar ou passe o mouse sobre o botão"}
+            do: "Tire o mouse do botão para parar de falar",
+            else: "Passe o mouse sobre o botão para falar"}
         </p>
       </div>
     </aside>
 
-    <section class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-850">
+    <section class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
       <div id="message-list" class="flex-1 overflow-y-auto p-4 space-y-4">
         <%= for message <- @messages do %>
           <% is_own_message = message.user.id == @user.id %>
@@ -151,7 +157,7 @@
       </div>
 
       <div class="p-4 border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
-        <form class="flex items-center gap-3">
+        <form phx-submit="send_message" class="flex items-center gap-3">
           <input
             phx-hook="MessageInput"
             id="message-input"
