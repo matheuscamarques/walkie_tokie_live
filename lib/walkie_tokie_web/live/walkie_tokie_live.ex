@@ -171,6 +171,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
 
   def handle_info({:nodedown, node_name}, socket) do
     IO.inspect(node_name, label: "Node down UI")
+
     updated_users =
       socket.assigns.users
       |> Enum.map(fn user ->
@@ -186,6 +187,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
 
   def handle_info({:nodeup, node_name}, socket) do
     IO.inspect(node_name, label: "Node up UI")
+
     updated_users =
       socket.assigns.users
       |> Enum.map(fn user ->
