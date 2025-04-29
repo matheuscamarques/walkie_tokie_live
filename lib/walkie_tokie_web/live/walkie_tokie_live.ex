@@ -8,6 +8,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       PubSub.subscribe(WalkieTokie.PubSub, "node_speaking")
+      PubSub.subscribe(WalkieTokie.PubSub, "cluster_events")
       PubSub.subscribe(WalkieTokie.ChatPubSub, "node_messages")
       Process.send_after(self(), :check_inactive_users, @inactivity_timeout)
     end
@@ -166,6 +167,36 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
     else
       {:noreply, socket}
     end
+  end
+
+  def handle_info({:nodedown, node_name}, socket) do
+    IO.inspect(node_name, label: "Node down UI")
+    updated_users =
+      socket.assigns.users
+      |> Enum.map(fn user ->
+        if user.id == node_name do
+          %{user | online: false, is_speaking: false}
+        else
+          user
+        end
+      end)
+
+    {:noreply, assign(socket, users: updated_users)}
+  end
+
+  def handle_info({:nodeup, node_name}, socket) do
+    IO.inspect(node_name, label: "Node up UI")
+    updated_users =
+      socket.assigns.users
+      |> Enum.map(fn user ->
+        if user.id == node_name do
+          %{user | online: true, is_speaking: false}
+        else
+          user
+        end
+      end)
+
+    {:noreply, assign(socket, users: updated_users)}
   end
 
   # Utils
