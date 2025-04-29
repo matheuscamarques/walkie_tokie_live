@@ -33,19 +33,21 @@ defmodule WalkieTokie.ConnectSenders do
   def handle_info({:nodeup, node}, state) do
     Logger.info("[ConnectSenders] Node UP: #{inspect(node)}")
 
-    if String.contains?(Atom.to_string(node), "server") do
+    cond do
+    String.contains?(Atom.to_string(node), "server") ->  
       Logger.info("[ConnectSenders] Ignoring server node: #{inspect(node)}")
       {:noreply, state}
-    else
-      if MapSet.member?(state, node) do
-        Logger.info("[ConnectSenders] Node already started: #{inspect(node)}")
-        {:noreply, state}
-      else
+      
+    MapSet.member?(state, node) -> 
+       Logger.info("[ConnectSenders] Node already started: #{inspect(node)}")
+       {:noreply, state}
+       
+     true ->
         Logger.info("[ConnectSenders] Starting sender for node: #{inspect(node)}")
         Phoenix.PubSub.broadcast(WalkieTokie.PubSub, @topic, {:nodeup, node})
         SenderDynamicSupervisor.start_sender(node_target: node)
-        {:noreply, MapSet.put(state, node)}
-      end
+        {:noreply, MapSet.put(state, node)}    
+    end
     end
   end
 end
