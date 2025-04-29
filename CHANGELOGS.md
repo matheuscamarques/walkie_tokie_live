@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2025-04-29
+
+### Fixed
+- Fixed a bug where the `WalkieTokieWeb.WalkieTokieLive` module was not properly updating the UI when an `node` was added or removed.
+
+### Changed
+- `WalkieTokie.ConnectSenders` now uses `:net_kernel.monitor_nodes(true)` to monitor nodes instead of an routine.
+  - This change improves the performance and reliability of node monitoring.
+  - `WalkieTokie.ConnectSenders` now broadcasts a message though **Phonix.PubSub** when a node is added or removed which is used to update the UI.
+
 ## [0.0.1] - 2025-04-27
 
 ### Added
