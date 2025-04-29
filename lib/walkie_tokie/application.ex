@@ -40,7 +40,8 @@ defmodule WalkieTokie.Application do
       WalkieTokie.MasterConnector,
       WalkieTokie.MicrophoneDriver,
       WalkieTokie.ContextSupervisor,
-      WalkieTokie.ConnectSenders
+      WalkieTokie.ConnectSenders,
+      WalkieTokie.KeyboardDetector
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
