@@ -48,17 +48,23 @@ defmodule WalkieTokie.SenderDynamicSupervisor do
   def stop_sender(args) do
     node_target = Keyword.get(args, :node_target)
 
-    with {:ok, pid} <- whereis(node_target) do
-      Logger.info("[SenderDynamicSupervisor] Stopping sender for node: #{inspect(node_target)}")
-      GenServer.stop(pid, :normal)
-    else
+    case where_is_sender(node_target) do
+      {:ok, pid} ->
+        Logger.info("[SenderDynamicSupervisor] Stopping sender for node: #{inspect(node_target)}")
+        GenServer.stop(pid, :normal)
+        :ok
+
       :error ->
         Logger.error("[SenderDynamicSupervisor] Sender not found for node: #{inspect(node_target)}")
         {:error, :not_found}
     end
   end
 
-  defp whereis(node_target) do
+
+  # Returns the PID of the sender for the given node target.
+  # If the sender is not found, it will return an error.
+  @spec where_is_sender(atom()) :: {:ok, pid()} | :error
+  defp where_is_sender(node_target) do
     case Registry.lookup(WalkieTokie.SenderRegistry, node_target) do
       [{pid, _}] -> {:ok, pid}
       [] -> :error
