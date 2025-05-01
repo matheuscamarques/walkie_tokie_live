@@ -129,7 +129,10 @@ defmodule WalkieTokie.MicrophoneDriver do
 
     # Sanity check: Se path for nil, falha com log
     if path == nil do
-      Logger.error("Executável de captura de áudio não encontrado! Por favor, instale o #{executable_name} para usar este aplicativo.")
+      Logger.error(
+        "Executável de captura de áudio não encontrado! Por favor, instale o #{executable_name} para usar este aplicativo."
+      )
+
       {:noreply, set_dict(updated_state, :audio_port, nil)}
     else
       port = Port.open({:spawn_executable, path}, [:binary, :stream, args: args])

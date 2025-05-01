@@ -17,18 +17,26 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
 
     users =
       Node.list()
-      |> Enum.reject(fn node ->
-        Atom.to_string(node) |> String.contains?("server")
-      end)
-      |> Enum.map(fn node ->
-        %{
-          id: node,
-          name: Atom.to_string(node),
-          online: true,
-          inactive: false,
-          is_speaking: false,
-          last_active_at: current_time
-        }
+      |> Enum.reduce([], fn node, acc ->
+        node_name = Atom.to_string(node)
+
+        case String.contains?(node_name, "server") do
+          true ->
+            acc
+
+          false ->
+            [
+              %{
+                id: node,
+                name: node_name,
+                online: true,
+                inactive: false,
+                is_speaking: false,
+                last_active_at: current_time
+              }
+              | acc
+            ]
+        end
       end)
 
     {:ok,
