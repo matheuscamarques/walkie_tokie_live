@@ -73,8 +73,15 @@ defmodule WalkieTokie.MicrophoneDriver do
   def handle_info(:start_talking, state) do
     updated_state = set_dict(state, :is_talking, true)
 
+    os =
+      case :os.type() do
+        {:win32, _} -> "windows"
+        {:unix, :darwin} -> "mac"
+        {:unix, _} -> "linux"
+      end
+
     {path, args} =
-      case System.get_env("OS") do
+      case os do
         "mac" ->
           {
             System.find_executable("sox"),
