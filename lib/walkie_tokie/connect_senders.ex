@@ -31,8 +31,8 @@ defmodule WalkieTokie.ConnectSenders do
       {:noreply, state}
     else
       # Stop the sender for the node that is down
-      WalkieTokie.SenderDynamicSupervisor.stop_sender(node_target: node)
-      # Broadcast the node down event to all connected nodes
+      SenderDynamicSupervisor.stop_sender(node_target: node)
+      # Broadcast the node down event to current node
       Phoenix.PubSub.local_broadcast(WalkieTokie.PubSub, @topic, {:nodedown, node})
       {:noreply, MapSet.delete(state, node)}
     end

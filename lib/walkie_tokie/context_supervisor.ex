@@ -13,7 +13,7 @@ defmodule WalkieTokie.ContextSupervisor do
 
       # SenderDynamicSupervisor é um DynamicSupervisor
       {Registry, keys: :unique, name: WalkieTokie.SenderRegistry},
-      {WalkieTokie.SenderDynamicSupervisor, []},
+      {WalkieTokie.SenderDynamicSupervisor, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

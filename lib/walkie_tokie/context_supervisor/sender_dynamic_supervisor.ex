@@ -52,14 +52,15 @@ defmodule WalkieTokie.SenderDynamicSupervisor do
       {:ok, pid} ->
         Logger.info("[SenderDynamicSupervisor] Stopping sender for node: #{inspect(node_target)}")
         GenServer.stop(pid, :normal)
-        :ok
 
       :error ->
-        Logger.error("[SenderDynamicSupervisor] Sender not found for node: #{inspect(node_target)}")
+        Logger.error(
+          "[SenderDynamicSupervisor] Sender not found for node: #{inspect(node_target)}"
+        )
+
         {:error, :not_found}
     end
   end
-
 
   # Returns the PID of the sender for the given node target.
   # If the sender is not found, it will return an error.
