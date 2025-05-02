@@ -13,7 +13,13 @@ defmodule WalkieTokie.Sender do
     @compiled_audio_topic <> to_string(Node.self())
   end
 
-  def start_link(init_args), do: GenServer.start_link(__MODULE__, init_args)
+  def start_link(init_args) do
+    node_target = Keyword.fetch!(init_args, :node_target)
+
+    GenServer.start_link(__MODULE__, init_args,
+      name: {:via, Registry, {WalkieTokie.SenderRegistry, node_target}}
+    )
+  end
 
   @type connection_status :: :disconnected | :connected
   @type node_target :: atom()
@@ -23,6 +29,7 @@ defmodule WalkieTokie.Sender do
   # Novo flag para indicar se está falando
   @type is_talking :: boolean()
   @type audio_port :: Port | nil
+
   def init(args) do
     node_target = Keyword.get(args, :node_target, :default_node)
     audio_device = Keyword.get(args, :audio_device, "default")
