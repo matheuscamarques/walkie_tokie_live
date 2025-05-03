@@ -73,11 +73,18 @@ defmodule WalkieTokie.MicrophoneDriver do
   def handle_info(:start_talking, state) do
     updated_state = set_dict(state, :is_talking, true)
 
+    {os, executable_name} =
+      case :os.type() do
+        {:win32, _} -> {"windows", "sox"}
+        {:unix, :darwin} -> {"mac", "sox"}
+        {:unix, _} -> {"linux", "arecord"}
+      end
+
     {path, args} =
-      case System.get_env("OS") do
-        "windows" ->
+      case os do
+       "windows" ->
           {
-            System.find_executable("sox"),
+            System.find_executable(executable_name),
             [
               "--buffer",
               "3200",
@@ -100,7 +107,7 @@ defmodule WalkieTokie.MicrophoneDriver do
 
         "mac" ->
           {
-            System.find_executable("sox"),
+            System.find_executable(executable_name),
             [
               "--buffer",
               "3200",
@@ -121,7 +128,7 @@ defmodule WalkieTokie.MicrophoneDriver do
 
         _linux_or_other ->
           {
-            System.find_executable("arecord"),
+            System.find_executable(executable_name),
             [
               "-r",
               "16000",
@@ -144,7 +151,10 @@ defmodule WalkieTokie.MicrophoneDriver do
 
     # Sanity check: Se path for nil, falha com log
     if path == nil do
-      Logger.error("Executável de captura de áudio não encontrado!")
+      Logger.error(
+        "Executável de captura de áudio não encontrado! Por favor, instale o #{executable_name} para usar este aplicativo."
+      )
+
       {:noreply, set_dict(updated_state, :audio_port, nil)}
     else
       port = Port.open({:spawn_executable, path}, [:binary, :stream, args: args])

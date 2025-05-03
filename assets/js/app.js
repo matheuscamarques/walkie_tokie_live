@@ -57,7 +57,6 @@ Hooks.MessageInput = {
         event.preventDefault();
         const message = this.el.value;
         if (message.trim() !== "") {
-          this.pushEvent("send_message", { message });
           this.el.value = "";
         }
       }
