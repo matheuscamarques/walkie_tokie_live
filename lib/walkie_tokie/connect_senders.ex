@@ -25,8 +25,17 @@ defmodule WalkieTokie.ConnectSenders do
   @impl true
   def handle_info({:nodedown, node}, state) do
     Logger.info("[ConnectSenders] Node DOWN: #{inspect(node)}")
-    Phoenix.PubSub.broadcast(WalkieTokie.PubSub, @topic, {:nodedown, node})
-    {:noreply, MapSet.delete(state, node)}
+
+    if is_server_node?(node) do
+      Logger.info("[ConnectSenders] Ignoring server node: #{inspect(node)}")
+      {:noreply, state}
+    else
+      # Stop the sender for the node that is down
+      SenderDynamicSupervisor.stop_sender(node_target: node)
+      # Broadcast the node down event to current node
+      Phoenix.PubSub.local_broadcast(WalkieTokie.PubSub, @topic, {:nodedown, node})
+      {:noreply, MapSet.delete(state, node)}
+    end
   end
 
   @impl true
@@ -34,7 +43,7 @@ defmodule WalkieTokie.ConnectSenders do
     Logger.info("[ConnectSenders] Node UP: #{inspect(node)}")
 
     cond do
-      String.contains?(Atom.to_string(node), "server") ->
+      is_server_node?(node) ->
         Logger.info("[ConnectSenders] Ignoring server node: #{inspect(node)}")
         {:noreply, state}
 
@@ -48,5 +57,9 @@ defmodule WalkieTokie.ConnectSenders do
         SenderDynamicSupervisor.start_sender(node_target: node)
         {:noreply, MapSet.put(state, node)}
     end
+  end
+
+  defp is_server_node?(node) do
+    String.contains?(Atom.to_string(node), "server")
   end
 end
