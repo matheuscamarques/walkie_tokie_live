@@ -21,15 +21,23 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
         Atom.to_string(node) |> String.contains?("server")
       end)
       |> Enum.map(fn node ->
+        full_name = Atom.to_string(node)
+        [username, _ip] = String.split(full_name, "@")
+        custom_name = "#{username}@web-engenharia"
+
         %{
           id: node,
-          name: Atom.to_string(node),
+          name: custom_name,
           online: true,
           inactive: false,
           is_speaking: false,
           last_active_at: current_time
         }
       end)
+
+    full_name = Atom.to_string(Node.self())
+    [username, _ip] = String.split(full_name, "@")
+    custom_name = "#{username}@web-engenharia"
 
     {:ok,
      socket
@@ -39,7 +47,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
      |> assign(
        user: %{
          id: Node.self(),
-         name: Atom.to_string(Node.self()),
+         name: custom_name,
          online: true,
          inactive: false,
          is_speaking: false,
@@ -52,11 +60,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
   def handle_event("send_message", %{"message" => message}, socket) do
     if message != "" do
       new_message = %{user: socket.assigns.user, body: message, date: now()}
-      # messages = [new_message | socket.assigns.messages]
-
-      # Enviar mensagem para o tópico
       PubSub.broadcast!(WalkieTokie.ChatPubSub, "node_messages", {:message, new_message})
-
       {:noreply, socket}
     else
       {:noreply, socket}
@@ -75,7 +79,6 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
 
   def handle_info({:message, message}, socket) do
     if socket.assigns.user.name != message.user.name do
-      # Enviar notificação para o cliente
       push_event(socket, "push-notification", %{
         title: "Nova mensagem de #{message.user.name}",
         body: message.body
@@ -137,7 +140,6 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
         end
       end)
 
-    # Reagendar verificação
     Process.send_after(self(), :check_inactive_users, @inactivity_timeout)
 
     {:noreply, assign(socket, users: users)}

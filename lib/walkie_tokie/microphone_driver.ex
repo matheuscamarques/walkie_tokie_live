@@ -75,6 +75,29 @@ defmodule WalkieTokie.MicrophoneDriver do
 
     {path, args} =
       case System.get_env("OS") do
+        "windows" ->
+          {
+            System.find_executable("sox"),
+            [
+              "--buffer",
+              "3200",
+              "-t",
+              "waveaudio",
+              "-d",
+              "-b",
+              "16",
+              "-r",
+              "16000",
+              "-c",
+              "1",
+              "-e",
+              "signed-integer",
+              "-t",
+              "raw",
+              "-"
+            ]
+          }
+
         "mac" ->
           {
             System.find_executable("sox"),
@@ -110,15 +133,14 @@ defmodule WalkieTokie.MicrophoneDriver do
               "pulse",
               "-c",
               "1",
-              # 100ms
               "--buffer-time",
               "100000",
-              # 25ms
               "--period-time",
               "25000"
             ]
           }
       end
+
 
     # Sanity check: Se path for nil, falha com log
     if path == nil do
