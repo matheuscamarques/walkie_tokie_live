@@ -28,10 +28,10 @@ defmodule WalkieTokie.Receiver do
 
   @spec start_link(any()) :: :ignore | {:error, any()} | {:ok, pid()}
   def start_link(init_args) do
-    node_target = Keyword.fetch!(init_args, :node_target)
+    node_parent = Keyword.fetch!(init_args, :node_parent)
 
     GenServer.start_link(__MODULE__, :ok,
-      name: {:via, Registry, {WalkieTokie.ReceiverRegistry, node_target}}
+      name: {:via, Registry, {WalkieTokie.ReceiverRegistry, node_parent}}
     )
   end
 

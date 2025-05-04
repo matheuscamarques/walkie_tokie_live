@@ -1,7 +1,7 @@
 defmodule WalkieTokie.ContextSupervisor.ReceiverPool do
 
   def start_receiver(node_parent) do
-    case WalkieTokie.ReceiverDynamicSupervisor.start_receiver(node_parent) do
+    case WalkieTokie.ReceiverDynamicSupervisor.start_receiver(node_parent: node_parent) do
       {:ok, pid} ->
         {:ok, pid}
 
