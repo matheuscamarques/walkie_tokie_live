@@ -82,25 +82,18 @@ defmodule WalkieTokie.MicrophoneDriver do
 
     {path, args} =
       case os do
-       "windows" ->
+        "windows" ->
           {
             System.find_executable(executable_name),
             [
-              "--buffer",
-              "3200",
-              "-t",
-              "waveaudio",
+              "--buffer", "3200",
+              "-t", "waveaudio",
               "-d",
-              "-b",
-              "16",
-              "-r",
-              "16000",
-              "-c",
-              "1",
-              "-e",
-              "signed-integer",
-              "-t",
-              "raw",
+              "-b", "16",
+              "-r", "16000",
+              "-c", "1",
+              "-e", "signed-integer",
+              "-t", "raw",
               "-"
             ]
           }
@@ -109,41 +102,28 @@ defmodule WalkieTokie.MicrophoneDriver do
           {
             System.find_executable(executable_name),
             [
-              "--buffer",
-              "3200",
+              "--buffer", "3200",
               "-d",
-              "-b",
-              "16",
-              "-r",
-              "16000",
-              "-c",
-              "1",
-              "-e",
-              "signed-integer",
-              "-t",
-              "raw",
+              "-b", "16",
+              "-r", "16000",
+              "-c", "1",
+              "-e", "signed-integer",
+              "-t", "raw",
               "-"
             ]
           }
 
-        _linux_or_other ->
+        _ ->
           {
             System.find_executable(executable_name),
             [
-              "-r",
-              "16000",
-              "-f",
-              "S16_LE",
-              "-t",
-              "raw",
-              "-D",
-              "pulse",
-              "-c",
-              "1",
-              "--buffer-time",
-              "100000",
-              "--period-time",
-              "25000"
+              "-r", "16000",
+              "-f", "S16_LE",
+              "-t", "raw",
+              "-D", "pulse",
+              "-c", "1",
+              "--buffer-time", "100000",
+              "--period-time", "25000"
             ]
           }
       end
