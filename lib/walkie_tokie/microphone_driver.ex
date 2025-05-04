@@ -77,7 +77,7 @@ defmodule WalkieTokie.MicrophoneDriver do
       case :os.type() do
         {:win32, _} -> {"windows", "sox"}
         {:unix, :darwin} -> {"mac", "sox"}
-        {:unix, _} -> {"linux", "arecord"}
+        {:unix, _} -> {"linux", "sox"}
       end
 
     {path, args} =
