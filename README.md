@@ -1,4 +1,6 @@
-# Project Setup
+# Walkie Tolkie Project Setup
+![image](https://github.com/user-attachments/assets/89517937-8793-4c92-a7d5-c9ae2f822c74)
+
 
 ## Requirements
 
