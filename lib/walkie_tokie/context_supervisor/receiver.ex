@@ -32,18 +32,27 @@ defmodule WalkieTokie.Receiver do
   ## Public API
 
   @spec start_link(any()) :: :ignore | {:error, any()} | {:ok, pid()}
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, :ok)
+  def start_link(init_args) do
+    node_target = Keyword.fetch!(init_args, :node_target)
+
+    GenServer.start_link(__MODULE__, :ok,
+      name: {:via, Registry, {WalkieTokie.ReceiverRegistry, node_target}}
+    )
   end
 
-  def send_chunk(pid,from_node_name, chunk) when is_binary(chunk) do
-    GenServer.cast(pid, {:audio_chunk, from_node_name, chunk})
+  def send_chunk(node_target, from_node_name, chunk) when is_binary(chunk) do
+    GenServer.cast(
+      {:via, Registry, {WalkieTokie.ReceiverRegistry, node_target}},
+      {:audio_chunk, from_node_name, chunk}
+    )
   end
 
-  def stop(pid) do
-    GenServer.cast(pid, :stop)
+  def stop(node_target) do
+    GenServer.cast(
+      {:via, Registry, {WalkieTokie.ReceiverRegistry, node_target}},
+      :stop
+    )
   end
-
   ## GenServer Callbacks
 
   @impl true

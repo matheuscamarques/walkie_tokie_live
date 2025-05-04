@@ -176,7 +176,13 @@ defmodule WalkieTokie.Sender do
       Port.close(port)
     end
 
-    {:noreply, set_dict(updated_state, :audio_port, nil)}
+    state =
+      state
+      |> set_dict(:is_talking, false)
+      |> set_dict(:audio_port, nil)
+      |> set_dict(:chunk_data, <<>>)
+
+    {:noreply, state}
   end
 
   def handle_info(:send_audio_chunk, state) do
@@ -292,6 +298,11 @@ defmodule WalkieTokie.Sender do
          {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, new_value},
          {:receiver_pid, receiver_pid}}
 
+      :receiver_pid ->
+      {{:connection_status, connection_status}, {:node_target, node_target},
+        {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+        {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port},
+        {:receiver_pid, new_value}}
       _ ->
         {
           {:connection_status, connection_status},

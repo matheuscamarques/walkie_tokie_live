@@ -9,11 +9,13 @@ defmodule WalkieTokie.ContextSupervisor do
   def init(:ok) do
     children = [
       # Receiver é um GenServer
-      WalkieTokie.Receiver,
+      # WalkieTokie.Receiver,
 
       # SenderDynamicSupervisor é um DynamicSupervisor
       {Registry, keys: :unique, name: WalkieTokie.SenderRegistry},
-      {WalkieTokie.SenderDynamicSupervisor, []}
+      {Registry, keys: :unique, name: WalkieTokie.ReceiverRegistry},
+      {WalkieTokie.SenderDynamicSupervisor, []},
+      {WalkieTokie.ReceiverDynamicSupervisor, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

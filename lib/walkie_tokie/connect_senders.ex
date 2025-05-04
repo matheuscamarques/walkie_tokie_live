@@ -5,6 +5,7 @@ defmodule WalkieTokie.ConnectSenders do
   and start a sender for each new node.
   It will also log the connection status.
   """
+  alias WalkieTokie.ReceiverDynamicSupervisor
   alias WalkieTokie.SenderDynamicSupervisor
   use GenServer
   require Logger
@@ -32,6 +33,7 @@ defmodule WalkieTokie.ConnectSenders do
     else
       # Stop the sender for the node that is down
       SenderDynamicSupervisor.stop_sender(node_target: node)
+      ReceiverDynamicSupervisor.stop_receiver(node_target: node)
       # Broadcast the node down event to current node
       Phoenix.PubSub.local_broadcast(WalkieTokie.PubSub, @topic, {:nodedown, node})
       {:noreply, MapSet.delete(state, node)}
@@ -55,6 +57,7 @@ defmodule WalkieTokie.ConnectSenders do
         Logger.info("[ConnectSenders] Starting sender for node: #{inspect(node)}")
         Phoenix.PubSub.broadcast(WalkieTokie.PubSub, @topic, {:nodeup, node})
         SenderDynamicSupervisor.start_sender(node_target: node)
+        ReceiverDynamicSupervisor.start_receiver(node_parent: node)
         {:noreply, MapSet.put(state, node)}
     end
   end
