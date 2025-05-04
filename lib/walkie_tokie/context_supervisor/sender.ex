@@ -36,6 +36,8 @@ defmodule WalkieTokie.Sender do
 
     Phoenix.PubSub.subscribe(@pubsub, audio_topic())
 
+    {:ok, pid} = :rpc.call(node_target, WalkieTokie.ContextSupervisor.ReceiverPool, :start_receiver, [node()])
+
     state = {
       {:connection_status, :disconnected},
       {:node_target, node_target},
@@ -45,7 +47,9 @@ defmodule WalkieTokie.Sender do
       # Inicializa o flag de falando como falso
       {:is_talking, false},
       # Adiciona um campo para o Port
-      {:audio_port, nil}
+      {:audio_port, nil},
+
+      {:receiver_pid, pid}
     }
 
     Process.send_after(self(), :try_connection, 1000)
@@ -94,7 +98,9 @@ defmodule WalkieTokie.Sender do
 
       Appsignal.set_gauge("data_upload", byte_size(chunk))
       Appsignal.set_gauge("node_data_upload", byte_size(chunk), %{node: inspect(Node.self())})
-      :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [Node.self(), chunk])
+      remote_receiver_pid = dict(state, :receiver_pid)
+
+      :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [remote_receiver_pid, Node.self(), chunk])
     end
 
     {:noreply, set_dict(state, :is_talking, true)}
@@ -204,7 +210,8 @@ defmodule WalkieTokie.Sender do
           {:accept_transfer, accept_transfer},
           {:chunk_data, chunk_data},
           {:is_talking, is_talking},
-          {:audio_port, audio_port}
+          {:audio_port, audio_port},
+          {:receiver_pid, receiver_pid}
         },
         atom
       ) do
@@ -216,6 +223,8 @@ defmodule WalkieTokie.Sender do
       :chunk_data -> chunk_data
       :is_talking -> is_talking
       :audio_port -> audio_port
+      :receiver_pid -> receiver_pid
+      _ -> nil
     end
   end
 
@@ -228,7 +237,8 @@ defmodule WalkieTokie.Sender do
           {:accept_transfer, accept_transfer},
           {:chunk_data, chunk_data},
           {:is_talking, is_talking},
-          {:audio_port, audio_port}
+          {:audio_port, audio_port},
+          {:receiver_pid, _receiver_pid}
         },
         key,
         new_value

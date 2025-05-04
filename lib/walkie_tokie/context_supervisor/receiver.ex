@@ -33,15 +33,15 @@ defmodule WalkieTokie.Receiver do
 
   @spec start_link(any()) :: :ignore | {:error, any()} | {:ok, pid()}
   def start_link(_opts) do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+    GenServer.start_link(__MODULE__, :ok)
   end
 
-  def send_chunk(from_node_name, chunk) when is_binary(chunk) do
-    GenServer.cast(__MODULE__, {:audio_chunk, from_node_name, chunk})
+  def send_chunk(pid,from_node_name, chunk) when is_binary(chunk) do
+    GenServer.cast(pid, {:audio_chunk, from_node_name, chunk})
   end
 
-  def stop do
-    GenServer.cast(__MODULE__, :stop)
+  def stop(pid) do
+    GenServer.cast(pid, :stop)
   end
 
   ## GenServer Callbacks
