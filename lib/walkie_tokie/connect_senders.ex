@@ -2,9 +2,10 @@ defmodule WalkieTokie.ConnectSenders do
   @moduledoc """
   GenServer responsible for connecting to all nodes in the cluster.
   It will check every 10 seconds if there are new nodes in the cluster
-  and start a sender for each new node.
+  and start a sender for each new node, unless the current node or target node is a server.
   It will also log the connection status.
   """
+  alias WalkieTokie.ReceiverDynamicSupervisor
   alias WalkieTokie.SenderDynamicSupervisor
   use GenServer
   require Logger
@@ -17,7 +18,7 @@ defmodule WalkieTokie.ConnectSenders do
 
   @impl true
   def init(_) do
-    Logger.info("[ConnectSenders] Start ConectSenders")
+    Logger.info("[ConnectSenders] Start ConnectSenders")
     :net_kernel.monitor_nodes(true)
     {:ok, MapSet.new()}
   end
@@ -30,9 +31,9 @@ defmodule WalkieTokie.ConnectSenders do
       Logger.info("[ConnectSenders] Ignoring server node: #{inspect(node)}")
       {:noreply, state}
     else
-      # Stop the sender for the node that is down
       SenderDynamicSupervisor.stop_sender(node_target: node)
-      # Broadcast the node down event to current node
+      ReceiverDynamicSupervisor.stop_receiver(node_target: node)
+
       Phoenix.PubSub.local_broadcast(WalkieTokie.PubSub, @topic, {:nodedown, node})
       {:noreply, MapSet.delete(state, node)}
     end
@@ -43,6 +44,10 @@ defmodule WalkieTokie.ConnectSenders do
     Logger.info("[ConnectSenders] Node UP: #{inspect(node)}")
 
     cond do
+      is_server_node?(Node.self()) ->
+        Logger.info("[ConnectSenders] This node is a server, not creating sender: #{inspect(Node.self())}")
+        {:noreply, state}
+
       is_server_node?(node) ->
         Logger.info("[ConnectSenders] Ignoring server node: #{inspect(node)}")
         {:noreply, state}
@@ -54,6 +59,7 @@ defmodule WalkieTokie.ConnectSenders do
       true ->
         Logger.info("[ConnectSenders] Starting sender for node: #{inspect(node)}")
         Phoenix.PubSub.broadcast(WalkieTokie.PubSub, @topic, {:nodeup, node})
+        ReceiverDynamicSupervisor.start_receiver(node_target: node)
         SenderDynamicSupervisor.start_sender(node_target: node)
         {:noreply, MapSet.put(state, node)}
     end

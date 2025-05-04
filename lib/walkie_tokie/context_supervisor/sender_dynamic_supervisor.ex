@@ -33,9 +33,18 @@ defmodule WalkieTokie.SenderDynamicSupervisor do
       }
 
       case DynamicSupervisor.start_child(__MODULE__, child_spec) do
-        {:ok, _pid} -> :ok
-        {:error, {:already_started, _pid}} -> :ok
-        error -> error
+        {:ok, pid} ->
+          Logger.info("[SenderDynamicSupervisor] Starting sender for node: #{inspect(node_target)}")
+          {:ok, pid}
+        {:error, {:already_started, pid}} ->
+          Logger.info("[SenderDynamicSupervisor] Sender already started for node: #{inspect(node_target)}")
+          {:ok, pid}
+        error ->
+          Logger.error("""
+          [SenderDynamicSupervisor] Error starting sender for node: #{inspect(node_target)}
+          Reason: #{inspect(error)}
+          """)
+          error
       end
     end
   end

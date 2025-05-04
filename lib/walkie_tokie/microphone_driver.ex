@@ -77,30 +77,23 @@ defmodule WalkieTokie.MicrophoneDriver do
       case :os.type() do
         {:win32, _} -> {"windows", "sox"}
         {:unix, :darwin} -> {"mac", "sox"}
-        {:unix, _} -> {"linux", "arecord"}
+        {:unix, _} -> {"linux", "sox"}
       end
 
     {path, args} =
       case os do
-       "windows" ->
+        "windows" ->
           {
             System.find_executable(executable_name),
             [
-              "--buffer",
-              "3200",
-              "-t",
-              "waveaudio",
+              "--buffer", "3200",
+              "-t", "waveaudio",
               "-d",
-              "-b",
-              "16",
-              "-r",
-              "16000",
-              "-c",
-              "1",
-              "-e",
-              "signed-integer",
-              "-t",
-              "raw",
+              "-b", "16",
+              "-r", "16000",
+              "-c", "1",
+              "-e", "signed-integer",
+              "-t", "raw",
               "-"
             ]
           }
@@ -109,43 +102,31 @@ defmodule WalkieTokie.MicrophoneDriver do
           {
             System.find_executable(executable_name),
             [
-              "--buffer",
-              "3200",
+              "--buffer", "3200",
               "-d",
-              "-b",
-              "16",
-              "-r",
-              "16000",
-              "-c",
-              "1",
-              "-e",
-              "signed-integer",
-              "-t",
-              "raw",
+              "-b", "16",
+              "-r", "16000",
+              "-c", "1",
+              "-e", "signed-integer",
+              "-t", "raw"
+            ]
+          }
+
+        _ ->
+          {
+            System.find_executable(executable_name),
+            [
+              "--buffer", "3200",
+              "-d",
+              "-b", "16",
+              "-r", "16000",
+              "-c", "1",
+              "-e", "signed-integer",
+              "-t", "raw",
               "-"
             ]
           }
 
-        _linux_or_other ->
-          {
-            System.find_executable(executable_name),
-            [
-              "-r",
-              "16000",
-              "-f",
-              "S16_LE",
-              "-t",
-              "raw",
-              "-D",
-              "pulse",
-              "-c",
-              "1",
-              "--buffer-time",
-              "100000",
-              "--period-time",
-              "25000"
-            ]
-          }
       end
 
 
