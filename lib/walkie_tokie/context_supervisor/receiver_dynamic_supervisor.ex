@@ -22,7 +22,7 @@ defmodule WalkieTokie.ReceiverDynamicSupervisor do
   """
   @spec start_receiver(Keyword.t()) :: {:ok, pid()} | {:error, term()}
   def start_receiver(args) do
-    node_target = Keyword.get(args, :node_parent)
+    node_target = Keyword.get(args, :node_target)
 
     if not is_nil(node_target) do
       child_spec = %{
@@ -33,9 +33,15 @@ defmodule WalkieTokie.ReceiverDynamicSupervisor do
       }
 
       case DynamicSupervisor.start_child(__MODULE__, child_spec) do
-        {:ok, pid} -> {:ok, pid}
-        {:error, {:already_started, pid}} -> {:ok, pid}
-        error -> error
+        {:ok, pid} ->
+          Logger.info("[ReceiverDynamicSupervisor] Starting receiver for node: #{inspect(node_target)}")
+          {:ok, pid}
+        {:error, {:already_started, pid}} ->
+          Logger.info("[ReceiverDynamicSupervisor] Receiver already started for node: #{inspect(node_target)}")
+          {:ok, pid}
+        error ->
+          Logger.error("[ReceiverDynamicSupervisor] Error starting receiver for node: #{inspect(node_target)}")
+          error
       end
     end
   end
@@ -47,7 +53,6 @@ defmodule WalkieTokie.ReceiverDynamicSupervisor do
   @spec stop_receiver(Keyword.t()) :: :ok | {:error, term()}
   def stop_receiver(args) do
     node_target = Keyword.get(args, :node_target)
-
     case where_is_receiver(node_target) do
       {:ok, pid} ->
         Logger.info("[ReceiverDynamicSupervisor] Stopping receiver for node: #{inspect(node_target)}")
@@ -65,10 +70,15 @@ defmodule WalkieTokie.ReceiverDynamicSupervisor do
   # Returns the PID of the receiver for the given node target.
   # If the receiver is not found, it will return an error.
   @spec where_is_receiver(atom()) :: {:ok, pid()} | :error
-  defp where_is_receiver(node_target) do
+  def where_is_receiver(node_target) do
+    # Registry.select(WalkieTokie.ReceiverRegistry, [{{:"$1", :"$2", :_}, [], [{{:"$1", :"$2"}}]}])
     case Registry.lookup(WalkieTokie.ReceiverRegistry, node_target) do
-      [{pid, _}] -> {:ok, pid}
-      [] -> :error
+      [{pid, _}] ->
+        Logger.info("[ReceiverDynamicSupervisor] Receiver found for node: #{inspect(node_target)}")
+        {:ok, pid}
+      [] ->
+        Logger.error("[ReceiverDynamicSupervisor] Receiver not found for node: #{inspect(node_target)}")
+        :error
     end
   end
 

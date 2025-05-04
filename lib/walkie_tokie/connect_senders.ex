@@ -56,8 +56,8 @@ defmodule WalkieTokie.ConnectSenders do
       true ->
         Logger.info("[ConnectSenders] Starting sender for node: #{inspect(node)}")
         Phoenix.PubSub.broadcast(WalkieTokie.PubSub, @topic, {:nodeup, node})
+        ReceiverDynamicSupervisor.start_receiver(node_target: node)
         SenderDynamicSupervisor.start_sender(node_target: node)
-        ReceiverDynamicSupervisor.start_receiver(node_parent: node)
         {:noreply, MapSet.put(state, node)}
     end
   end

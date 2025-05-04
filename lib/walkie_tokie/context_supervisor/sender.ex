@@ -60,7 +60,7 @@ defmodule WalkieTokie.Sender do
 
     Phoenix.PubSub.subscribe(@pubsub, audio_topic())
 
-    {:ok, pid} = :rpc.call(node_target, WalkieTokie.ContextSupervisor.ReceiverPool, :start_receiver, [node()])
+    {:ok, pid} = WalkieTokie.ReceiverDynamicSupervisor.where_is_receiver(node_target)
 
     state = {
       {:connection_status, :disconnected},
@@ -112,20 +112,17 @@ defmodule WalkieTokie.Sender do
 
   def handle_info({:audio_chunk, chunk}, state) do
     if dict(state, :is_talking) do
-      node_target = dict(state, :node_target)
-
-      Logger.info("Sending audio chunk",
-        node_target: inspect(node_target),
-        length: byte_size(chunk)
-      )
+      # node_target = dict(state, :node_target)
 
       Appsignal.set_gauge("data_upload", byte_size(chunk))
       Appsignal.set_gauge("node_data_upload", byte_size(chunk), %{node: inspect(Node.self())})
-      remote_receiver_pid = dict(state, :receiver_pid)
 
-      :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [remote_receiver_pid, Node.self(), chunk])
+      remote_receiver_pid = dict(state, :receiver_pid)
+      GenServer.cast(remote_receiver_pid, {:audio_chunk, Node.self(), chunk})
+      # :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [remote_receiver_pid, Node.self(), chunk])
     end
 
+    # Atualiza o estado
     {:noreply, set_dict(state, :is_talking, true)}
   end
 
@@ -299,10 +296,10 @@ defmodule WalkieTokie.Sender do
          {:receiver_pid, receiver_pid}}
 
       :receiver_pid ->
-      {{:connection_status, connection_status}, {:node_target, node_target},
-        {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-        {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port},
-        {:receiver_pid, new_value}}
+        {{:connection_status, connection_status}, {:node_target, node_target},
+          {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
+          {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port},
+          {:receiver_pid, new_value}}
       _ ->
         {
           {:connection_status, connection_status},
