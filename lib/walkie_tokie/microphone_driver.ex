@@ -108,8 +108,7 @@ defmodule WalkieTokie.MicrophoneDriver do
               "-r", "16000",
               "-c", "1",
               "-e", "signed-integer",
-              "-t", "raw",
-              "-"
+              "-t", "raw"
             ]
           }
 
