@@ -21,6 +21,8 @@ defmodule WalkieTokie.Sender do
     )
   end
 
+  # Type definitions
+
   @type connection_status :: :disconnected | :connected
   @type node_target :: atom()
   @type audio_device :: binary()
@@ -29,6 +31,28 @@ defmodule WalkieTokie.Sender do
   # Novo flag para indicar se está falando
   @type is_talking :: boolean()
   @type audio_port :: Port | nil
+  @type receiver_pid :: pid()
+
+  @type dict_index ::
+  :connection_status
+  | :node_target
+  | :audio_device
+  | :accept_transfer
+  | :chunk_data
+  | :is_talking
+  | :audio_port
+  | :receiver_pid
+
+  @type dict_state :: {
+    {:connection_status, connection_status},
+    {:node_target, node_target},
+    {:audio_device, audio_device},
+    {:accept_transfer, accept_transfer},
+    {:chunk_data, chunk_data},
+    {:is_talking, is_talking},
+    {:audio_port, audio_port},
+    {:receiver_pid, receiver_pid}
+  }
 
   def init(args) do
     node_target = Keyword.get(args, :node_target, :default_node)
@@ -48,7 +72,6 @@ defmodule WalkieTokie.Sender do
       {:is_talking, false},
       # Adiciona um campo para o Port
       {:audio_port, nil},
-
       {:receiver_pid, pid}
     }
 
@@ -184,23 +207,6 @@ defmodule WalkieTokie.Sender do
     {:noreply, state}
   end
 
-  @type dict_index ::
-          :connection_status
-          | :node_target
-          | :audio_device
-          | :accept_transfer
-          | :chunk_data
-          | :is_talking
-          | :audio_port
-  @type dict_state :: {
-          {:connection_status, connection_status},
-          {:node_target, node_target},
-          {:audio_device, audio_device},
-          {:accept_transfer, accept_transfer},
-          {:chunk_data, chunk_data},
-          {:is_talking, is_talking},
-          {:audio_port, audio_port}
-        }
   @spec dict(dict_state(), dict_index()) :: any()
   def dict(
         {
@@ -238,7 +244,7 @@ defmodule WalkieTokie.Sender do
           {:chunk_data, chunk_data},
           {:is_talking, is_talking},
           {:audio_port, audio_port},
-          {:receiver_pid, _receiver_pid}
+          {:receiver_pid, receiver_pid}
         },
         key,
         new_value
@@ -247,37 +253,44 @@ defmodule WalkieTokie.Sender do
       :connection_status ->
         {{:connection_status, new_value}, {:node_target, node_target},
          {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port},
+         {:receiver_pid, receiver_pid}}
 
       :node_target ->
         {{:connection_status, connection_status}, {:node_target, new_value},
          {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port},
+         {:receiver_pid, receiver_pid}}
 
       :audio_device ->
         {{:connection_status, connection_status}, {:node_target, node_target},
          {:audio_device, new_value}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, audio_port},
+         {:receiver_pid, receiver_pid}}
 
       :accept_transfer ->
         {{:connection_status, connection_status}, {:node_target, node_target},
          {:audio_device, audio_device}, {:accept_transfer, new_value}, {:chunk_data, chunk_data},
-         {:is_talking, is_talking}, {:audio_port, audio_port}}
+         {:is_talking, is_talking}, {:audio_port, audio_port},
+         {:receiver_pid, receiver_pid}}
 
       :chunk_data ->
         {{:connection_status, connection_status}, {:node_target, node_target},
          {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, new_value}, {:is_talking, is_talking}, {:audio_port, audio_port}}
+         {:chunk_data, new_value}, {:is_talking, is_talking}, {:audio_port, audio_port},
+         {:receiver_pid, receiver_pid}}
 
       :is_talking ->
         {{:connection_status, connection_status}, {:node_target, node_target},
          {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, new_value}, {:audio_port, audio_port}}
+         {:chunk_data, chunk_data}, {:is_talking, new_value}, {:audio_port, audio_port},
+         {:receiver_pid, receiver_pid}}
 
       :audio_port ->
         {{:connection_status, connection_status}, {:node_target, node_target},
          {:audio_device, audio_device}, {:accept_transfer, accept_transfer},
-         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, new_value}}
+         {:chunk_data, chunk_data}, {:is_talking, is_talking}, {:audio_port, new_value},
+         {:receiver_pid, receiver_pid}}
 
       _ ->
         {
@@ -287,7 +300,8 @@ defmodule WalkieTokie.Sender do
           {:accept_transfer, accept_transfer},
           {:chunk_data, chunk_data},
           {:is_talking, is_talking},
-          {:audio_port, audio_port}
+          {:audio_port, audio_port},
+          {:receiver_pid, receiver_pid}
         }
     end
   end
