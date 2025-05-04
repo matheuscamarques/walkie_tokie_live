@@ -117,15 +117,17 @@ defmodule WalkieTokie.MicrophoneDriver do
           {
             System.find_executable(executable_name),
             [
+              "--buffer", "3200",
+              "-d",
+              "-b", "16",
               "-r", "16000",
-              "-f", "S16_LE",
-              "-t", "raw",
-              "-D", "pulse",
               "-c", "1",
-              "--buffer-time", "100000",
-              "--period-time", "25000"
+              "-e", "signed-integer",
+              "-t", "raw",
+              "-"
             ]
           }
+
       end
 
 
