@@ -60,7 +60,7 @@ defmodule WalkieTokie.Sender do
 
     Phoenix.PubSub.subscribe(@pubsub, audio_topic())
 
-    {:ok, pid} = :rpc.call(node_target, WalkieTokie.ReceiverPool, :start_link, [node_target: Node.self()])
+    {:ok, pid} = :rpc.call(node_target, WalkieTokie.ReceiverPool, :start_link, [ Node.self()])
 
     state = {
       {:connection_status, :disconnected},
