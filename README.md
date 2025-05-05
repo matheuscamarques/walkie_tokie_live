@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/c90c7dcb-8025-4fa2-a08e-d5827198c2f0)# Project Setup
+# Project Setup
 
 # Walkie Tolkie Project Setup
 ![image](https://github.com/user-attachments/assets/89517937-8793-4c92-a7d5-c9ae2f822c74)
