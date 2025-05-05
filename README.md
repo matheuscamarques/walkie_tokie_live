@@ -1,4 +1,4 @@
-# Project Setup
+![image](https://github.com/user-attachments/assets/c90c7dcb-8025-4fa2-a08e-d5827198c2f0)# Project Setup
 
 # Walkie Tolkie Project Setup
 ![image](https://github.com/user-attachments/assets/89517937-8793-4c92-a7d5-c9ae2f822c74)
@@ -10,6 +10,15 @@
 > In this video, starting at 2h28min, you can see a practical demonstration of the application, including setup, distributed execution, and audio manipulation.
 
 ---
+
+# Diagrams 
+![image](https://github.com/user-attachments/assets/79eaab1e-0fd9-4f86-9011-6c924a43db7b)
+
+![image](https://github.com/user-attachments/assets/d8b3dabe-a931-4fa9-80df-fa1ae0359d06)
+
+![image](https://github.com/user-attachments/assets/15c4b31c-3dec-4f69-b48d-f040926d8898)
+
+![image](https://github.com/user-attachments/assets/a7b2f5a2-6e04-4f7b-ab98-01d49a9870f5)
 
 ## Requirements
 
