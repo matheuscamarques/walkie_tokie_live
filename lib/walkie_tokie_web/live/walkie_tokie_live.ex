@@ -2,6 +2,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
   use WalkieTokieWeb, :live_view
   alias WalkieTokie.MicrophoneDriver
   alias Phoenix.PubSub
+  alias WalkieTokie.Transcription
 
   @inactivity_timeout 10_000
 
@@ -10,6 +11,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
       PubSub.subscribe(WalkieTokie.PubSub, "node_speaking")
       PubSub.subscribe(WalkieTokie.PubSub, "cluster_events")
       PubSub.subscribe(WalkieTokie.ChatPubSub, "node_messages")
+      PubSub.subscribe(WalkieTokie.ChatPubSub, "node_transcriptions")
       Process.send_after(self(), :check_inactive_users, @inactivity_timeout)
     end
 
@@ -73,11 +75,13 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
 
   def handle_event("start_transmission", _params, socket) do
     MicrophoneDriver.start_talking()
+    Transcription.start_recording()
     {:noreply, assign(socket, :is_transmitting, true)}
   end
 
   def handle_event("stop_transmission", _params, socket) do
     MicrophoneDriver.stop_talking()
+    Transcription.stop_and_transcribe()
     {:noreply, assign(socket, :is_transmitting, false)}
   end
 
@@ -89,9 +93,21 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
       })
     end
 
+    new_message = Map.put(message, :type, "message")
+
     {:noreply,
      socket
-     |> assign(messages: socket.assigns.messages ++ [message])}
+     |> assign(messages: socket.assigns.messages ++ [new_message])}
+  end
+
+  def handle_info({:transcription, %{text: message}}, socket) do
+    if message != "" do
+      new_message = %{user: socket.assigns.user, body: message, date: now()}
+      PubSub.broadcast!(WalkieTokie.ChatPubSub, "node_messages", {:message, new_message})
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info({:node_speaking, from_node_name}, socket) do
