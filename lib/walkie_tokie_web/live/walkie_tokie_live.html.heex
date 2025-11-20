@@ -147,7 +147,13 @@
                   {message.date}
                 </span>
               </div>
-              <p class={"text-sm " <> if !is_own_message, do: "text-purple-900 dark:text-purple-400", else: ""}>
+              <p class={"text-sm " <>
+                               if Map.get(message, :type) == "transcription" do
+                                 "text-purple-900 dark:text-purple-400"
+                               else
+                                 if is_own_message, do: "", else: "text-purple-900 dark:text-purple-400"
+                               end
+                             }>
                 {message.body}
               </p>
             </div>

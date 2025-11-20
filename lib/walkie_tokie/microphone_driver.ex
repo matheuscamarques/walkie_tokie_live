@@ -5,6 +5,7 @@ defmodule WalkieTokie.MicrophoneDriver do
   and streaming it to the connected nodes.
   It will also handle the connection status and audio device.
   """
+  alias WalkieTokie.Transcription
   require Logger
   use GenServer
 
@@ -146,6 +147,7 @@ defmodule WalkieTokie.MicrophoneDriver do
   def handle_info({port, {:data, raw_audio}}, state) do
     if port == dict(state, :audio_port) and dict(state, :is_talking) do
       Phoenix.PubSub.broadcast(@pubsub, audio_topic(), {:audio_chunk, raw_audio})
+      Transcription.transcribe(raw_audio)
 
       # Se a parada foi solicitada, inicia o processo de finalização
       if dict(state, :stop_requested) do

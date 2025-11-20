@@ -58,7 +58,11 @@ defmodule WalkieTokie.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:appsignal_phoenix, "~> 2.7.0"}
+      {:appsignal_phoenix, "~> 2.7.0"},
+      {:bumblebee, "~> 0.5.3"},
+      {:nx, "~> 0.7.0", override: true},
+      {:exla, "~> 0.7.0"},
+      {:axon, "~> 0.6.0"}
     ]
   end
 
