@@ -60,7 +60,7 @@ defmodule WalkieTokie.Sender do
 
     Phoenix.PubSub.subscribe(@pubsub, audio_topic())
 
-    {:ok, pid} = :rpc.call(node_target, WalkieTokie.ContextSupervisor.ReceiverPool, :start_receiver, [ Node.self()])
+    {:ok, pid} = :erpc.call(node_target, WalkieTokie.ContextSupervisor.ReceiverPool, :start_receiver, [ Node.self()])
 
     state = {
       {:connection_status, :disconnected},
@@ -119,7 +119,7 @@ defmodule WalkieTokie.Sender do
 
       remote_receiver_pid = dict(state, :receiver_pid)
       # GenServer.cast(remote_receiver_pid, {:audio_chunk, Node.self(), chunk})
-      :rpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [remote_receiver_pid, Node.self(), chunk])
+      :erpc.cast(node_target, WalkieTokie.Receiver, :send_chunk, [remote_receiver_pid, Node.self(), chunk])
     end
 
     # Atualiza o estado
