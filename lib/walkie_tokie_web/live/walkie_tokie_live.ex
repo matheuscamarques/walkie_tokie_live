@@ -10,6 +10,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
     if connected?(socket) do
       PubSub.subscribe(WalkieTokie.PubSub, "node_speaking")
       PubSub.subscribe(WalkieTokie.PubSub, "cluster_events")
+      PubSub.subscribe(WalkieTokie.PubSub, "webrtc_signals")
       PubSub.subscribe(WalkieTokie.ChatPubSub, "node_messages")
       PubSub.subscribe(WalkieTokie.ChatPubSub, "node_transcriptions")
       Process.send_after(self(), :check_inactive_users, @inactivity_timeout)
@@ -34,6 +35,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
                 online: true,
                 inactive: false,
                 is_speaking: false,
+                camera_active: false,
                 last_active_at: current_time
               }
               | acc
@@ -48,6 +50,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
     {:ok,
      socket
      |> assign(is_transmitting: false)
+     |> assign(is_camera_active: false)
      |> assign(active_user: nil)
      |> assign(users: users)
      |> assign(
@@ -57,6 +60,7 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
          online: true,
          inactive: false,
          is_speaking: false,
+         camera_active: false,
          last_active_at: current_time
        }
      )
@@ -83,6 +87,23 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
     MicrophoneDriver.stop_talking()
     Transcription.stop_and_transcribe()
     {:noreply, assign(socket, :is_transmitting, false)}
+  end
+
+  def handle_event("toggle_camera", %{"active" => active}, socket) do
+    PubSub.broadcast!(WalkieTokie.PubSub, "cluster_events", {:camera_status, Node.self(), active})
+    {:noreply, assign(socket, :is_camera_active, active)}
+  end
+
+  def handle_event("webrtc_signal", %{"target" => target, "type" => type, "data" => data}, socket) do
+    target_node = String.to_existing_atom(target)
+
+    PubSub.broadcast!(
+      WalkieTokie.PubSub,
+      "webrtc_signals",
+      {:webrtc_signal, Node.self(), target_node, type, data}
+    )
+
+    {:noreply, socket}
   end
 
   def handle_info({:message, message}, socket) do
@@ -221,6 +242,42 @@ defmodule WalkieTokieWeb.WalkieTokieLive do
       end)
 
     {:noreply, assign(socket, users: updated_users)}
+  end
+
+  def handle_info({:camera_status, from_node, active}, socket) do
+    users =
+      Enum.map(socket.assigns.users, fn user ->
+        if user.id == from_node do
+          %{user | camera_active: active}
+        else
+          user
+        end
+      end)
+
+    socket =
+      socket
+      |> assign(users: users)
+      |> push_event("camera_status_change", %{
+        node: Atom.to_string(from_node),
+        active: active
+      })
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:webrtc_signal, from_node, target_node, type, data}, socket) do
+    if target_node == Node.self() do
+      socket =
+        push_event(socket, "webrtc_signal", %{
+          from: Atom.to_string(from_node),
+          type: type,
+          data: data
+        })
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
   end
 
   # Utils
