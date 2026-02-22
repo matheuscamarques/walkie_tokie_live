@@ -12,7 +12,7 @@ import Config
 # The node name is defined in the form of a string with the format "node@ip_address"
 config :walkie_tokie, :master_nodes, [
   # :"server@10.241.169.206"
-  :"server@192.168.100.26"
+  :"server@web-engenharia"
 ]
 
 # config :walkie_tokie,
